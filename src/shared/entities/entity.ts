@@ -1,4 +1,4 @@
-import { UniqueEntityId } from './unique-entity-id.js';
+import { UniqueEntityId } from "./unique-entity-id.js";
 
 export abstract class Entity<Props> {
   private _id: UniqueEntityId;
@@ -10,7 +10,7 @@ export abstract class Entity<Props> {
 
   constructor(props: Props, id?: UniqueEntityId) {
     this.props = props;
-    this._id = new UniqueEntityId();
+    this._id = id ?? new UniqueEntityId();
   }
 
   public equals(entity: Entity<unknown>) {
