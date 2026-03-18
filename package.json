@@ -4,6 +4,10 @@
   "main": "dist/main.js",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "lint": "eslint . --cache --cache-location .eslintcache",
+    "lint:fix": "npm run lint -- --fix",
+    "format": "prettier . --write",
+    "format:check": "prettier . --check",
     "start": "node dist/main.js",
     "start:dev": "ts-node src/main.ts",
     "test": "vitest run",
@@ -27,8 +31,13 @@
     "@nestjs/testing": "^11.1.17",
     "@types/node": "^24.10.2",
     "eslint": "^8.57.1",
+    "eslint-config-prettier": "10.1.8",
+    "globals": "^17.4.0",
+    "jiti": "^2.6.1",
+    "prettier": "3.8.1",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.57.1",
     "vitest": "^4.1.0"
   },
   "dependencies": {

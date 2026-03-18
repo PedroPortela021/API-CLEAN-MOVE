@@ -1,6 +1,7 @@
 node_modules
 dist
 coverage
+.eslintcache
 
 .env
 package-lock.json
