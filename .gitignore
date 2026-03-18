@@ -4,4 +4,3 @@ coverage
 .eslintcache
 
 .env
-package-lock.json
