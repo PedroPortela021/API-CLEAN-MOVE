@@ -14,6 +14,8 @@
     "start": "node dist/main.js",
     "start:dev": "ts-node src/main.ts",
     "test": "vitest run",
+    "test:unit": "vitest run src",
+    "test:infra": "vitest run test/infra",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json"
   },
@@ -30,7 +32,7 @@
   "homepage": "https://github.com/PedroPortela021/API-CLEAN-MOVE#readme",
   "description": "",
   "devDependencies": {
-    "@faker-js/faker": "^10.1.0",
+    "@faker-js/faker": "^10.3.0",
     "@nestjs/testing": "^11.1.17",
     "@types/node": "^24.10.2",
     "eslint": "^8.57.1",
