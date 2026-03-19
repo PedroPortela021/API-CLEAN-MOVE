@@ -6,6 +6,7 @@ import { Email } from "../../accounts/domain/value-objects/email";
 import { UserRole } from "../../accounts/domain/value-objects/user-role";
 import { Establishment } from "../../establishments/domain/entities/establishment";
 import { Cnpj } from "../../establishments/domain/value-objects/cnpj";
+import { OperatingHours } from "../../establishments/domain/value-objects/operating-hours";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { HashGenerator } from "../repositories/hash-generator";
 import { UsersRepository } from "../repositories/users-repository";
@@ -17,6 +18,7 @@ type RegisterEstablishmentUseCaseRequest = {
   email: Email;
   password: string;
   cnpj: Cnpj;
+  operatingHours: OperatingHours;
   phone: string;
   address: Address;
 };
@@ -42,6 +44,7 @@ export class RegisterEstablishmentUseCase {
     email,
     password,
     cnpj,
+    operatingHours,
     phone,
     address,
   }: RegisterEstablishmentUseCaseRequest): Promise<RegisterEstablishmentUseCaseResponse> {
@@ -77,6 +80,7 @@ export class RegisterEstablishmentUseCase {
       cnpj,
       corporateName,
       socialReason,
+      operatingHours,
     });
 
     await Promise.all([
