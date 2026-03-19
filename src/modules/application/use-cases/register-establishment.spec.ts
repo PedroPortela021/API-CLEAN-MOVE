@@ -7,6 +7,7 @@ import { InMemoryUsersRepository } from "../../../tests/repositories/in-memory-u
 import { Address } from "../../accounts/domain/value-objects/address";
 import { Email } from "../../accounts/domain/value-objects/email";
 import { Cnpj } from "../../establishments/domain/value-objects/cnpj";
+import { OperatingHours } from "../../establishments/domain/value-objects/operating-hours";
 import { RegisterEstablishmentUseCase } from "./register-establishment";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
@@ -14,6 +15,25 @@ let inMemoryEstablishmentsRepository: InMemoryEstablishmentsRepository;
 let fakeHashGenerator: FakeHashGenerator;
 
 let sut: RegisterEstablishmentUseCase;
+
+function makeOperatingHours() {
+  return OperatingHours.create({
+    days: [
+      {
+        day: "MONDAY",
+        ranges: [{ start: "08:00", end: "18:00" }],
+      },
+      {
+        day: "SATURDAY",
+        ranges: [{ start: "08:00", end: "12:00" }],
+      },
+      {
+        day: "SUNDAY",
+        ranges: [],
+      },
+    ],
+  });
+}
 
 describe("Register an establishment", () => {
   beforeEach(() => {
@@ -42,6 +62,7 @@ describe("Register an establishment", () => {
       corporateName: "Establishment-1",
       socialReason: "SOCIAL REASON TEST LTDA",
       email: new Email("jondoe@example.com"),
+      operatingHours: makeOperatingHours(),
       password: "jondoe@123",
       phone: "11111111111",
     });
@@ -83,6 +104,7 @@ describe("Register an establishment", () => {
       corporateName: "Establishment-2",
       socialReason: "SOCIAL REASON TEST LTDA 2",
       email: new Email("jondoe@example.com"),
+      operatingHours: makeOperatingHours(),
       password: "jondoe@123",
       phone: "11111111111",
     });
@@ -115,6 +137,7 @@ describe("Register an establishment", () => {
       corporateName: "Establishment-2",
       socialReason: "SOCIAL REASON TEST LTDA",
       email: new Email("jondoe@example.com"),
+      operatingHours: makeOperatingHours(),
       password: "jondoe@123",
       phone: "11111111111",
     });
@@ -145,6 +168,7 @@ describe("Register an establishment", () => {
         corporateName: "Establishment-1",
         socialReason: "SOCIAL REASON TEST LTDA",
         email: new Email("invalid-format"),
+        operatingHours: makeOperatingHours(),
         password: "jondoe@123",
         phone: "11111111111",
       }),
@@ -169,6 +193,7 @@ describe("Register an establishment", () => {
         corporateName: "Establishment-1",
         socialReason: "SOCIAL REASON TEST LTDA",
         email: new Email("validemail@example.com"),
+        operatingHours: makeOperatingHours(),
         password: "jondoe@123",
         phone: "11111111111",
       }),
