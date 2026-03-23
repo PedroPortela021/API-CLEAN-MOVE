@@ -2,6 +2,7 @@ import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
 import { ServiceCategory } from "../value-objects/category";
+import { EstimatedDuration } from "../value-objects/estimated-duration";
 import { Money } from "../value-objects/money";
 
 export type ServiceProps = {
@@ -9,7 +10,7 @@ export type ServiceProps = {
   serviceName: string;
   description: string;
   category: ServiceCategory;
-  averageDurationInMinutes: number;
+  estimatedDuration: EstimatedDuration;
   price: Money;
   isActive: boolean;
   createdAt: Date | null;
@@ -33,8 +34,8 @@ export class Service extends AggregateRoot<ServiceProps> {
     return this.props.category;
   }
 
-  get averageDurationInMinutes() {
-    return this.props.averageDurationInMinutes;
+  get estimatedDuration() {
+    return this.props.estimatedDuration;
   }
 
   get price() {
