@@ -1,22 +1,24 @@
-import { Entity } from "../../../../shared/entities/entity";
+import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
 import { ServiceCategory } from "../value-objects/category";
+import { Money } from "../value-objects/money";
 
 export type ServiceProps = {
-  ownerId: UniqueEntityId;
+  establishmentId: UniqueEntityId;
   serviceName: string;
   description: string;
   category: ServiceCategory;
   averageDurationInMinutes: number;
+  price: Money;
   isActive: boolean;
   createdAt: Date | null;
   updatedAt: Date | null;
 };
 
-export class Service extends Entity<ServiceProps> {
-  get ownerId() {
-    return this.props.ownerId;
+export class Service extends AggregateRoot<ServiceProps> {
+  get establishmentId() {
+    return this.props.establishmentId;
   }
 
   get serviceName() {
@@ -33,6 +35,10 @@ export class Service extends Entity<ServiceProps> {
 
   get averageDurationInMinutes() {
     return this.props.averageDurationInMinutes;
+  }
+
+  get price() {
+    return this.props.price;
   }
 
   get isActive() {
