@@ -21,9 +21,7 @@ export class InMemoryEstablishmentsRepository implements EstablishmentsRepositor
   }
 
   async findBySlug(slug: string): Promise<Establishment | null> {
-    const establishment = this.items.find(
-      (item) => item.slug.toString() === slug,
-    );
+    const establishment = this.items.find((item) => item.slug.value === slug);
 
     if (!establishment) {
       return null;
