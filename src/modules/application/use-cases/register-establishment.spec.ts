@@ -82,7 +82,9 @@ describe("Register an establishment", () => {
     expect(inMemoryUsersRepository.items[0]?.hashedPassword).toBe(
       "jondoe@123-hashed",
     );
-    expect(result.value.establishment.slug.value).toEqual("valid-establishment");
+    expect(result.value.establishment.slug.value).toEqual(
+      "valid-establishment",
+    );
   });
 
   it("not should be able to register an establishment with duplicated email", async () => {
