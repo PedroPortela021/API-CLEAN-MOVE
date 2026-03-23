@@ -3,4 +3,9 @@ import { Establishment } from "../../establishments/domain/entities/establishmen
 export abstract class EstablishmentsRepository {
   abstract create(data: Establishment): Promise<void>;
   abstract findByCnpj(cnpj: string): Promise<Establishment | null>;
+  abstract findBySlug(slug: string): Promise<Establishment | null>;
+  abstract findBySlugAndCnpj(
+    cnpj: string,
+    slug: string,
+  ): Promise<Establishment | null>;
 }
