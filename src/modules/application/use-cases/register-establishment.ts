@@ -7,6 +7,7 @@ import { UserRole } from "../../accounts/domain/value-objects/user-role";
 import { Establishment } from "../../establishments/domain/entities/establishment";
 import { Cnpj } from "../../establishments/domain/value-objects/cnpj";
 import { OperatingHours } from "../../establishments/domain/value-objects/operating-hours";
+import { Slug } from "../../establishments/domain/value-objects/slug";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { HashGenerator } from "../repositories/hash-generator";
 import { UsersRepository } from "../repositories/users-repository";
@@ -21,6 +22,7 @@ type RegisterEstablishmentUseCaseRequest = {
   operatingHours: OperatingHours;
   phone: string;
   address: Address;
+  slug?: Slug;
 };
 
 type RegisterEstablishmentUseCaseResponse = Either<
@@ -47,10 +49,13 @@ export class RegisterEstablishmentUseCase {
     operatingHours,
     phone,
     address,
+    slug: rawSlug,
   }: RegisterEstablishmentUseCaseRequest): Promise<RegisterEstablishmentUseCaseResponse> {
+    const slug = rawSlug ?? Slug.createFromText(corporateName);
+
     const [establishmentWithTheSameCnpj, userWithTheSameEmail] =
       await Promise.all([
-        this.establishmentsRepository.findByCnpj(cnpj.toString()),
+        this.establishmentsRepository.findBySlugAndCnpj(cnpj.value, slug.value),
         this.usersRepository.findByEmail(email.toString()),
       ]);
 

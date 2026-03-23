@@ -1,7 +1,7 @@
 import { EstablishmentsRepository } from "../../modules/application/repositories/establishment-repository";
 import { Establishment } from "../../modules/establishments/domain/entities/establishment";
 
-export class InMemoryEstablishmentsRepository extends EstablishmentsRepository {
+export class InMemoryEstablishmentsRepository implements EstablishmentsRepository {
   public items: Establishment[] = [];
 
   async create(data: Establishment): Promise<void> {
@@ -20,14 +20,24 @@ export class InMemoryEstablishmentsRepository extends EstablishmentsRepository {
     return establishment;
   }
 
-  async findByName(name: string): Promise<Establishment | null> {
+  async findBySlug(slug: string): Promise<Establishment | null> {
     const establishment = this.items.find(
-      (item) => item.corporateName === name,
+      (item) => item.slug.toString() === slug,
     );
 
     if (!establishment) {
       return null;
     }
+
+    return establishment;
+  }
+
+  async findBySlugAndCnpj(cnpj: string, slug: string) {
+    const establishment = this.items.find(
+      (item) => item.cnpj.value === cnpj || item.slug.value === slug,
+    );
+
+    if (!establishment) return null;
 
     return establishment;
   }

@@ -59,7 +59,7 @@ describe("Register an establishment", () => {
         zipCode: "11111-111",
       }),
       cnpj: Cnpj.create("37.158.666/0001-82"),
-      corporateName: "Establishment-1",
+      corporateName: "Valid Establishment",
       socialReason: "SOCIAL REASON TEST LTDA",
       email: new Email("jondoe@example.com"),
       operatingHours: makeOperatingHours(),
@@ -82,6 +82,7 @@ describe("Register an establishment", () => {
     expect(inMemoryUsersRepository.items[0]?.hashedPassword).toBe(
       "jondoe@123-hashed",
     );
+    expect(result.value.establishment.slug.value).toEqual("valid-establishment");
   });
 
   it("not should be able to register an establishment with duplicated email", async () => {
@@ -119,7 +120,7 @@ describe("Register an establishment", () => {
 
   it("not should be able to register an establishment with duplicated cnpj", async () => {
     const createdEstablishment = makeEstablishment({
-      cnpj: Cnpj.create("43324601000162"),
+      cnpj: Cnpj.create("41437902000177"),
     });
 
     await inMemoryEstablishmentsRepository.create(createdEstablishment);
@@ -133,7 +134,7 @@ describe("Register an establishment", () => {
         street: "street-1",
         zipCode: "11111-111",
       }),
-      cnpj: Cnpj.create("43.324.601/0001-62"),
+      cnpj: Cnpj.create("41.437.902/0001-77"),
       corporateName: "Establishment-2",
       socialReason: "SOCIAL REASON TEST LTDA",
       email: new Email("jondoe@example.com"),
