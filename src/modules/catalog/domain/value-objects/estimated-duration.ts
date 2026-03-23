@@ -69,9 +69,7 @@ export class EstimatedDuration extends ValueObject<EstimatedDurationProps> {
 
   private static validate(value: number, field: string) {
     if (!Number.isInteger(value)) {
-      throw new InvalidEstimatedDurationError(
-        `${field} must be an integer.`,
-      );
+      throw new InvalidEstimatedDurationError(`${field} must be an integer.`);
     }
 
     if (value <= 0) {
