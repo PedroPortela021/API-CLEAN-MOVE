@@ -2,6 +2,7 @@ import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Address } from "../value-objects/address";
 import { Email } from "../value-objects/email";
+import { Phone } from "../value-objects/phone";
 import { UserRole } from "../value-objects/user-role";
 
 export type UserProps = {
@@ -9,7 +10,7 @@ export type UserProps = {
   email: Email;
   hashedPassword: string;
   role: UserRole;
-  phone: string;
+  phone: Phone;
   address: Address;
 };
 

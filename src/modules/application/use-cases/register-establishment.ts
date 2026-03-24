@@ -3,6 +3,7 @@ import { ResourceAlreadyExistsError } from "../../../shared/errors/resource-alre
 import { User } from "../../accounts/domain/entities/user";
 import { Address } from "../../accounts/domain/value-objects/address";
 import { Email } from "../../accounts/domain/value-objects/email";
+import { Phone } from "../../accounts/domain/value-objects/phone";
 import { UserRole } from "../../accounts/domain/value-objects/user-role";
 import { Establishment } from "../../establishments/domain/entities/establishment";
 import { Cnpj } from "../../establishments/domain/value-objects/cnpj";
@@ -19,7 +20,7 @@ type RegisterEstablishmentUseCaseRequest = {
   password: string;
   cnpj: Cnpj;
   operatingHours: OperatingHours;
-  phone: string;
+  phone: Phone;
   address: Address;
 };
 
