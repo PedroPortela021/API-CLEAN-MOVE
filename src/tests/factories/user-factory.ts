@@ -23,7 +23,7 @@ export function makeUser(
       }),
       email: new Email(faker.internet.email()),
       hashedPassword: faker.internet.password(),
-      phone: Phone.create(faker.phone.number({ style: "national" })),
+      phone: Phone.create("11987654321"),
       role,
       ...override,
     },

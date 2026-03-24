@@ -52,7 +52,9 @@ describe("Register a customer", () => {
     }
 
     expect(inMemoryCustomersRepository.items[0]).toBe(result.value.customer);
-    expect(inMemoryUsersRepository.items[0]?.id).toBe(result.value.customer.userId);
+    expect(inMemoryUsersRepository.items[0]?.id).toBe(
+      result.value.customer.userId,
+    );
     expect(inMemoryUsersRepository.items[0]?.hashedPassword).toBe(
       "johndoe@123-hashed",
     );
