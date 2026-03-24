@@ -1,9 +1,9 @@
 import { Either, left, right } from "../../../shared/either";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { Service } from "../../catalog/domain/entities/services";
-import { ServiceCategory } from "../../catalog/domain/value-objects/category";
 import { EstimatedDuration } from "../../catalog/domain/value-objects/estimated-duration";
 import { Money } from "../../catalog/domain/value-objects/money";
+import { ServiceCategory } from "../../catalog/domain/value-objects/service-category";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { ServicesRepository } from "../repositories/services-repository";
 
