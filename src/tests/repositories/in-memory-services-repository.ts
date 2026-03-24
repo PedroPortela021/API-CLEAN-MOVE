@@ -1,10 +1,59 @@
 import { ServicesRepository } from "../../modules/application/repositories/services-repository";
 import { Service } from "../../modules/catalog/domain/entities/services";
+import { ServiceCategory } from "../../modules/catalog/domain/value-objects/service-category";
 
 export class InMemoryServicesRepository implements ServicesRepository {
   public items: Service[] = [];
 
   async create(service: Service): Promise<void> {
     this.items.push(service);
+  }
+
+  async findManyByEstablishmentId(
+    establishmentId: string,
+    filters?: {
+      serviceName?: string;
+      category?: ServiceCategory;
+      minPrice?: number;
+      maxPrice?: number;
+      page?: number;
+      size?: number;
+    },
+  ): Promise<Service[]> {
+    const page = filters?.page ?? 1;
+    const size = filters?.size ?? 20;
+
+    const filteredServices = this.items
+      .filter((item) => item.establishmentId.toString() === establishmentId)
+      .filter((item) => {
+        if (filters?.serviceName && item.serviceName !== filters.serviceName) {
+          return false;
+        }
+
+        if (filters?.category && item.category !== filters.category) {
+          return false;
+        }
+
+        if (
+          filters?.minPrice !== undefined &&
+          item.price.amountInCents < filters.minPrice
+        ) {
+          return false;
+        }
+
+        if (
+          filters?.maxPrice !== undefined &&
+          item.price.amountInCents > filters.maxPrice
+        ) {
+          return false;
+        }
+
+        return true;
+      });
+
+    const start = (page - 1) * size;
+    const end = start + size;
+
+    return filteredServices.slice(start, end);
   }
 }
