@@ -1,9 +1,9 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
-import { ServiceCategory } from "../value-objects/category";
 import { EstimatedDuration } from "../value-objects/estimated-duration";
 import { Money } from "../value-objects/money";
+import { ServiceCategory } from "../value-objects/service-category";
 
 export type ServiceProps = {
   establishmentId: UniqueEntityId;
