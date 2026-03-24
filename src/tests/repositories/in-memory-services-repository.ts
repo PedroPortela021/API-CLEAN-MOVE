@@ -9,6 +9,16 @@ export class InMemoryServicesRepository implements ServicesRepository {
     this.items.push(service);
   }
 
+  async findById(id: string): Promise<Service | null> {
+    const service = this.items.find((item) => item.id.toString() === id);
+
+    if (!service) {
+      return null;
+    }
+
+    return service;
+  }
+
   async findManyByEstablishmentId(
     establishmentId: string,
     filters?: {
@@ -55,5 +65,18 @@ export class InMemoryServicesRepository implements ServicesRepository {
     const end = start + size;
 
     return filteredServices.slice(start, end);
+  }
+
+  async save(service: Service): Promise<void> {
+    const serviceIndex = this.items.findIndex((item) =>
+      item.id.equals(service.id),
+    );
+
+    if (serviceIndex === -1) {
+      this.items.push(service);
+      return;
+    }
+
+    this.items[serviceIndex] = service;
   }
 }

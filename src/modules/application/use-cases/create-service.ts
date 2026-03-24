@@ -4,6 +4,7 @@ import { Service } from "../../catalog/domain/entities/services";
 import { EstimatedDuration } from "../../catalog/domain/value-objects/estimated-duration";
 import { Money } from "../../catalog/domain/value-objects/money";
 import { ServiceCategory } from "../../catalog/domain/value-objects/service-category";
+import { ServiceName } from "../../catalog/domain/value-objects/service-name";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { ServicesRepository } from "../repositories/services-repository";
 
@@ -51,7 +52,7 @@ export class CreateServiceUseCase {
 
     const service = Service.create({
       establishmentId: establishment.id,
-      serviceName,
+      serviceName: ServiceName.create(serviceName),
       description,
       category,
       price: Money.create(price),

@@ -15,4 +15,6 @@ export abstract class ServicesRepository {
     establishmentId: string,
     filters?: ServiceFilters,
   ): Promise<Service[]>;
+  abstract findById(id: string): Promise<Service | null>;
+  abstract save(service: Service): Promise<void>;
 }
