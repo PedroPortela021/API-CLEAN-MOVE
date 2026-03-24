@@ -11,6 +11,7 @@
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier . --write",
     "format:check": "prettier . --check",
+    "check:all": "npm run build && npm run lint && npm run format && npm run typecheck && npm run test",
     "start": "node dist/main.js",
     "start:dev": "ts-node src/main.ts",
     "test": "vitest run",

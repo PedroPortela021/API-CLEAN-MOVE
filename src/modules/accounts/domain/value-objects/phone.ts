@@ -32,10 +32,7 @@ export class Phone extends ValueObject<PhoneProps> {
 
   public get formatted(): string {
     if (this.props.value.length === 11) {
-      return this.props.value.replace(
-        /^(\d{2})(\d{5})(\d{4})$/,
-        "($1) $2-$3",
-      );
+      return this.props.value.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
     }
 
     return this.props.value.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
