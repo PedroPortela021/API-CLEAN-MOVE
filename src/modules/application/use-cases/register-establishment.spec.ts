@@ -6,6 +6,7 @@ import { InMemoryEstablishmentsRepository } from "../../../tests/repositories/in
 import { InMemoryUsersRepository } from "../../../tests/repositories/in-memory-users-repository";
 import { Address } from "../../accounts/domain/value-objects/address";
 import { Email } from "../../accounts/domain/value-objects/email";
+import { Phone } from "../../accounts/domain/value-objects/phone";
 import { Cnpj } from "../../establishments/domain/value-objects/cnpj";
 import { OperatingHours } from "../../establishments/domain/value-objects/operating-hours";
 import { RegisterEstablishmentUseCase } from "./register-establishment";
@@ -64,7 +65,7 @@ describe("Register an establishment", () => {
       email: new Email("jondoe@example.com"),
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: "11111111111",
+      phone: Phone.create("11987654321"),
     });
 
     expect(result.isRight()).toBe(true);
@@ -106,7 +107,7 @@ describe("Register an establishment", () => {
       email: new Email("jondoe@example.com"),
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: "11111111111",
+      phone: Phone.create("11987654321"),
     });
 
     expect(result.isLeft()).toBe(true);
@@ -139,7 +140,7 @@ describe("Register an establishment", () => {
       email: new Email("jondoe@example.com"),
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: "11111111111",
+      phone: Phone.create("11987654321"),
     });
 
     expect(result.isLeft()).toBe(true);
@@ -170,7 +171,7 @@ describe("Register an establishment", () => {
         email: new Email("invalid-format"),
         operatingHours: makeOperatingHours(),
         password: "jondoe@123",
-        phone: "11111111111",
+        phone: Phone.create("11987654321"),
       }),
     ).toThrow("Invalid email address: invalid-format");
 
@@ -195,7 +196,7 @@ describe("Register an establishment", () => {
         email: new Email("validemail@example.com"),
         operatingHours: makeOperatingHours(),
         password: "jondoe@123",
-        phone: "11111111111",
+        phone: Phone.create("11987654321"),
       }),
     ).toThrow("Invalid CNPJ: 05027115000191");
 
