@@ -44,9 +44,6 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.updatedAt ?? new Date(0);
   }
 
-  /**
-   * Atualiza o updatedAt quando houver mudança de estado.
-   */
   touch() {
     this.props.updatedAt = new Date();
   }
