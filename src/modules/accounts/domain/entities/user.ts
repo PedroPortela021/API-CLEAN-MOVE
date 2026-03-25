@@ -12,8 +12,8 @@ export type UserProps = {
   role: UserRole;
   phone: Phone;
   address: Address;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export class User extends AggregateRoot<UserProps> {
@@ -37,11 +37,11 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   get createdAt(): Date {
-    return this.props.createdAt ?? new Date(0);
+    return this.props.createdAt;
   }
 
   get updatedAt(): Date {
-    return this.props.updatedAt ?? new Date(0);
+    return this.props.updatedAt;
   }
 
   touch() {
@@ -49,31 +49,66 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   changeName(name: string) {
+    if (!name) {
+      // TODO: Implement validation
+    }
     if (this.props.name === name) return;
 
     this.props.name = name;
     this.touch();
   }
 
-  changeEmail(email: Email) {
-    if (this.props.email.equals(email)) return;
+  changeEmail(email: string) {
+    if (!email) {
+      // TODO: Implement validation
+    }
+    if (this.props.email.getValue() === email) return;
 
-    this.props.email = email;
+    this.props.email = new Email(email);
     this.touch();
   }
 
-  changePhone(phone: Phone) {
-    if (this.props.phone.equals(phone)) return;
+  changePhone(phone: string) {
+    if (!phone) {
+      // TODO: Implement validation
+    }
+    if (this.props.phone.value === phone) return;
 
-    this.props.phone = phone;
+    this.props.phone = Phone.create(phone);
     this.touch();
   }
 
   changeAddress(address: Address) {
+    if (!address) {
+      // TODO: Implement validation
+    }
     if (this.props.address.equals(address)) return;
 
     this.props.address = address;
     this.touch();
+  }
+
+  update(data: {
+    name?: string;
+    email?: Email;
+    phone?: Phone;
+    address?: Address;
+  }) {
+    if (data.name !== undefined) {
+      this.changeName(data.name);
+    }
+
+    if (data.email !== undefined) {
+      this.changeEmail(data.email.toString());
+    }
+
+    if (data.phone !== undefined) {
+      this.changePhone(data.phone.toString());
+    }
+
+    if (data.address !== undefined) {
+      this.changeAddress(data.address);
+    }
   }
 
   static create(props: UserProps, id?: UniqueEntityId) {

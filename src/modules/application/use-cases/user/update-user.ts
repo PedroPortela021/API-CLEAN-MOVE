@@ -40,7 +40,11 @@ export class UpdateUserUseCase {
       return left(new ResourceNotFoundError("User not found."));
     }
 
-    if (email) {
+    if (name !== undefined) {
+      existingUser.changeName(name);
+    }
+
+    if (email !== undefined) {
       const userWithTheSameEmail = await this.usersRepository.findByEmail(
         email.toString(),
       );
@@ -53,21 +57,12 @@ export class UpdateUserUseCase {
       }
     }
 
-    if (name) {
-      existingUser.changeName(name);
-    }
-
-    if (email) {
-      existingUser.changeEmail(email);
-    }
-
-    if (phone) {
-      existingUser.changePhone(phone);
-    }
-
-    if (address) {
-      existingUser.changeAddress(address);
-    }
+    existingUser.update({
+      ...(name !== undefined ? { name } : {}),
+      ...(email !== undefined ? { email } : {}),
+      ...(phone !== undefined ? { phone } : {}),
+      ...(address !== undefined ? { address } : {}),
+    });
 
     await this.usersRepository.save(existingUser);
 
