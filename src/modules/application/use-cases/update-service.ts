@@ -6,6 +6,9 @@ import { ServiceCategory } from "../../catalog/domain/value-objects/service-cate
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { ServicesRepository } from "../repositories/services-repository";
 import { NoUpdateFieldsProvidedError } from "../../../shared/errors/no-update-field-provided-error";
+import { InvalidServiceNameError } from "../../catalog/domain/value-objects/service-name";
+import { InvalidEstimatedDurationError } from "../../catalog/domain/value-objects/estimated-duration";
+import { InvalidMoneyError } from "../../catalog/domain/value-objects/money";
 
 type UpdateServiceUseCaseRequest = {
   establishmentId: string;
@@ -23,11 +26,21 @@ type UpdateServiceUseCaseRequest = {
 };
 
 type UpdateServiceUseCaseResponse = Either<
-  NoUpdateFieldsProvidedError | ResourceNotFoundError | NotAllowed,
+  | NoUpdateFieldsProvidedError
+  | ResourceNotFoundError
+  | NotAllowed
+  | InvalidServiceUpdateInputError,
   {
     service: Service;
   }
 >;
+
+export class InvalidServiceUpdateInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidServiceUpdateInputError";
+  }
+}
 
 export class UpdateServiceUseCase {
   constructor(
@@ -70,8 +83,19 @@ export class UpdateServiceUseCase {
       return left(new NotAllowed());
     }
 
-    serviceToUpdate.update(data);
-
+    try {
+      serviceToUpdate.update(data);
+    } catch (error) {
+      if (
+        error instanceof InvalidServiceNameError ||
+        error instanceof InvalidEstimatedDurationError ||
+        error instanceof InvalidMoneyError
+      ) {
+        return left(new InvalidServiceUpdateInputError(error.message));
+      }
+      throw error;
+    }
+    
     await this.servicesRepository.save(serviceToUpdate);
 
     return right({
