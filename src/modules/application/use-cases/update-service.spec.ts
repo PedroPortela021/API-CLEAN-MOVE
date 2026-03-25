@@ -164,7 +164,7 @@ describe("Update a service", () => {
   });
   it("should not be able to update a service using an establishment that is not the owner of that service", async () => {
     const establishmentOwner = makeEstablishment();
-    inMemoryEstablishmentsRepository.create(establishmentOwner);
+    await inMemoryEstablishmentsRepository.create(establishmentOwner);
 
     const service = makeService({
       establishmentId: establishmentOwner.id,
@@ -173,7 +173,7 @@ describe("Update a service", () => {
     await inMemoryServicesRepository.create(service);
 
     const anotherEstablishment = makeEstablishment();
-    inMemoryEstablishmentsRepository.create(anotherEstablishment);
+    await inMemoryEstablishmentsRepository.create(anotherEstablishment);
 
     const originalUpdatedAt = service.updatedAt?.getTime();
 
