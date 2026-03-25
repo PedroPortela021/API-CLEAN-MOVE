@@ -4,6 +4,13 @@ type MoneyProps = {
   amountInCents: number;
 };
 
+export class InvalidMoneyError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidMoneyError";
+  }
+}
+
 export class Money extends ValueObject<MoneyProps> {
   get amountInCents() {
     return this.props.amountInCents;
@@ -15,11 +22,11 @@ export class Money extends ValueObject<MoneyProps> {
 
   static create(amountInCents: number) {
     if (!Number.isInteger(amountInCents)) {
-      throw new Error("Amount must be an integer.");
+      throw new InvalidMoneyError("Amount must be an integer.");
     }
 
     if (amountInCents < 0) {
-      throw new Error("Amount cannot be negative.");
+      throw new InvalidMoneyError("Amount cannot be negative.");
     }
 
     return new Money({ amountInCents });
