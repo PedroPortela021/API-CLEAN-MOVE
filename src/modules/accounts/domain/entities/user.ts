@@ -12,6 +12,8 @@ export type UserProps = {
   role: UserRole;
   phone: Phone;
   address: Address;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class User extends AggregateRoot<UserProps> {
@@ -34,8 +36,61 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.address;
   }
 
+  get createdAt(): Date {
+    return this.props.createdAt ?? new Date(0);
+  }
+
+  get updatedAt(): Date {
+    return this.props.updatedAt ?? new Date(0);
+  }
+
+  /**
+   * Atualiza o updatedAt quando houver mudança de estado.
+   */
+  touch() {
+    this.props.updatedAt = new Date();
+  }
+
+  changeName(name: string) {
+    if (this.props.name === name) return;
+
+    this.props.name = name;
+    this.touch();
+  }
+
+  changeEmail(email: Email) {
+    if (this.props.email.equals(email)) return;
+
+    this.props.email = email;
+    this.touch();
+  }
+
+  changePhone(phone: Phone) {
+    if (this.props.phone.equals(phone)) return;
+
+    this.props.phone = phone;
+    this.touch();
+  }
+
+  changeAddress(address: Address) {
+    if (this.props.address.equals(address)) return;
+
+    this.props.address = address;
+    this.touch();
+  }
+
   static create(props: UserProps, id?: UniqueEntityId) {
-    const user = new User(props, id);
+    const createdAt = props.createdAt ?? new Date();
+    const updatedAt = props.updatedAt ?? createdAt;
+
+    const user = new User(
+      {
+        ...props,
+        createdAt,
+        updatedAt,
+      },
+      id,
+    );
 
     return user;
   }
