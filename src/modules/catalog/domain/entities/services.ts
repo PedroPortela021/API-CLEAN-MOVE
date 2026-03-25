@@ -1,6 +1,7 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
+import { InvalidEstimatedDurationTransitionError } from "../errors/invalid-estimated-duration-transition-error";
 import { EstimatedDuration } from "../value-objects/estimated-duration";
 import { Money } from "../value-objects/money";
 import { ServiceCategory } from "../value-objects/service-category";
@@ -65,29 +66,44 @@ export class Service extends AggregateRoot<ServiceProps> {
     };
     price?: number;
   }) {
-    if (data.serviceName !== undefined) {
-      this.changeServiceName(data.serviceName);
+    const newEstimatedDuration =
+      data.estimatedDuration !== undefined
+        ? EstimatedDuration.create(data.estimatedDuration)
+        : undefined;
+
+    const newServiceName =
+      data.serviceName !== undefined
+        ? ServiceName.create(data.serviceName)
+        : undefined;
+
+    const newPrice =
+      data.price !== undefined ? Money.create(data.price) : undefined;
+
+    if (newEstimatedDuration) {
+      this.changeEstimatedDuration(newEstimatedDuration);
     }
+
+    if (newServiceName !== undefined) {
+      this.changeServiceName(newServiceName);
+    }
+
+    if (newPrice) {
+      this.changePrice(newPrice);
+    }
+
     if (data.description !== undefined) {
       this.changeDescription(data.description);
     }
-    if (data.estimatedDuration !== undefined) {
-      this.changeEstimatedDuration(data.estimatedDuration);
-    }
+
     if (data.category !== undefined) {
       this.changeCategory(data.category);
     }
-    if (data.price !== undefined) {
-      this.changePrice(data.price);
-    }
   }
 
-  changeServiceName(serviceName: string) {
-    const newServiceName = ServiceName.create(serviceName);
+  changeServiceName(serviceName: ServiceName) {
+    if (this.serviceName.equals(serviceName)) return;
 
-    if (this.serviceName.equals(newServiceName)) return;
-
-    this.props.serviceName = newServiceName;
+    this.props.serviceName = serviceName;
     this.touch();
   }
 
@@ -107,24 +123,21 @@ export class Service extends AggregateRoot<ServiceProps> {
     this.touch();
   }
 
-  changeEstimatedDuration(input: {
-    minInMinutes: number;
-    maxInMinutes?: number;
-  }) {
-    const newEstimatedDuration = EstimatedDuration.create(input);
+  changeEstimatedDuration(estimatedDuration: EstimatedDuration) {
+    if (this.estimatedDuration.equals(estimatedDuration)) return;
 
-    if (this.estimatedDuration.equals(newEstimatedDuration)) return;
+    if (estimatedDuration.minInMinutes > this.estimatedDuration.maxInMinutes) {
+      throw new InvalidEstimatedDurationTransitionError();
+    }
 
-    this.props.estimatedDuration = newEstimatedDuration;
+    this.props.estimatedDuration = estimatedDuration;
     this.touch();
   }
 
-  changePrice(amountInCents: number) {
-    const newPrice = Money.create(amountInCents);
+  changePrice(price: Money) {
+    if (this.price.equalsValue(price)) return;
 
-    if (this.price.equalsValue(newPrice)) return;
-
-    this.props.price = newPrice;
+    this.props.price = price;
     this.touch();
   }
 
