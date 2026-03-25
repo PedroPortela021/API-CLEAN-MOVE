@@ -12,8 +12,8 @@ export type UserProps = {
   role: UserRole;
   phone: Phone;
   address: Address;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 };
 
 export class User extends AggregateRoot<UserProps> {
@@ -37,11 +37,13 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   get createdAt(): Date {
-    return this.props.createdAt;
+    // `createdAt` é garantido no `User.create()` com default.
+    return this.props.createdAt!;
   }
 
   get updatedAt(): Date {
-    return this.props.updatedAt;
+    // `updatedAt` é garantido no `User.create()` com default.
+    return this.props.updatedAt!;
   }
 
   touch() {
