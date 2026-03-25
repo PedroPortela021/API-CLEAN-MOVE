@@ -9,10 +9,10 @@ import { UsersRepository } from "../../repositories/users-repository";
 
 type UpdateUserUseCaseRequest = {
   user: User;
-  name: string;
-  email: Email;
-  phone: Phone;
-  address: Address;
+  name?: string;
+  email?: Email;
+  phone?: Phone;
+  address?: Address;
 };
 
 type UpdateUserUseCaseResponse = Either<
@@ -40,33 +40,39 @@ export class UpdateUserUseCase {
       return left(new ResourceNotFoundError("User not found."));
     }
 
-    const userWithTheSameEmail = await this.usersRepository.findByEmail(
-      email.toString(),
-    );
+    if (email) {
+      const userWithTheSameEmail = await this.usersRepository.findByEmail(
+        email.toString(),
+      );
 
-    if (
-      userWithTheSameEmail &&
-      !userWithTheSameEmail.id.equals(existingUser.id)
-    ) {
-      return left(new ResourceAlreadyExistsError("Email already in use."));
+      if (
+        userWithTheSameEmail &&
+        !userWithTheSameEmail.id.equals(existingUser.id)
+      ) {
+        return left(new ResourceAlreadyExistsError("Email already in use."));
+      }
     }
 
-    const updatedUser = User.create(
-      {
-        name,
-        email,
-        phone,
-        address,
-        hashedPassword: existingUser.hashedPassword,
-        role: existingUser.role,
-      },
-      existingUser.id,
-    );
+    if (name) {
+      existingUser.changeName(name);
+    }
 
-    await this.usersRepository.save(updatedUser);
+    if (email) {
+      existingUser.changeEmail(email);
+    }
+
+    if (phone) {
+      existingUser.changePhone(phone);
+    }
+
+    if (address) {
+      existingUser.changeAddress(address);
+    }
+
+    await this.usersRepository.save(existingUser);
 
     return right({
-      user: updatedUser,
+      user: existingUser,
     });
   }
 }
