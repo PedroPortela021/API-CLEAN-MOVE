@@ -36,7 +36,10 @@ export class InMemoryServicesRepository implements ServicesRepository {
     const filteredServices = this.items
       .filter((item) => item.establishmentId.toString() === establishmentId)
       .filter((item) => {
-        if (filters?.serviceName && item.serviceName !== filters.serviceName) {
+        if (
+          filters?.serviceName &&
+          item.serviceName.toString() !== filters.serviceName
+        ) {
           return false;
         }
 

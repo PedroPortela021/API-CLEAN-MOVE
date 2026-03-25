@@ -6,6 +6,7 @@ import { InMemoryEstablishmentsRepository } from "../../../tests/repositories/in
 import { InMemoryServicesRepository } from "../../../tests/repositories/in-memory-services-repository";
 import { getFirstItem } from "../../../tests/utils/get-first-item";
 import { GetServiceCatalogByEstablishmentUseCase } from "./get-services-catalog-by-establishment";
+import { ServiceName } from "../../catalog/domain/value-objects/service-name";
 
 let inMemoryServicesRepository: InMemoryServicesRepository;
 let inMemoryEstablishmentsRepository: InMemoryEstablishmentsRepository;
@@ -72,14 +73,14 @@ describe("Get services", () => {
 
     await inMemoryServicesRepository.create(
       makeService({
-        serviceName: "Lavagem simples",
+        serviceName: ServiceName.create("Lavagem simples"),
         establishmentId: establishment.id,
       }),
     );
 
     await inMemoryServicesRepository.create(
       makeService({
-        serviceName: "Higienizacao interna",
+        serviceName: ServiceName.create("Higienizacao interna"),
         establishmentId: anotherEstablishment.id,
       }),
     );
@@ -100,7 +101,7 @@ describe("Get services", () => {
     expect(firstService.establishmentId.toString()).toBe(
       establishment.id.toString(),
     );
-    expect(firstService.serviceName).toBe("Lavagem simples");
+    expect(firstService.serviceName.value).toBe("Lavagem simples");
   });
 
   it("should be able to get many services of an unique establishment with filters", async () => {
@@ -110,7 +111,7 @@ describe("Get services", () => {
 
     await inMemoryServicesRepository.create(
       makeService({
-        serviceName: "service-0",
+        serviceName: ServiceName.create("service-0"),
         category: "WASH",
         price: Money.create(15000),
         establishmentId: establishment.id,
@@ -119,7 +120,7 @@ describe("Get services", () => {
 
     await inMemoryServicesRepository.create(
       makeService({
-        serviceName: "service-1",
+        serviceName: ServiceName.create("service-1"),
         category: "WASH",
         price: Money.create(25000),
         establishmentId: establishment.id,
@@ -128,7 +129,7 @@ describe("Get services", () => {
 
     await inMemoryServicesRepository.create(
       makeService({
-        serviceName: "service-2",
+        serviceName: ServiceName.create("service-2"),
         category: "PROTECTION",
         price: Money.create(35000),
         establishmentId: establishment.id,
@@ -138,7 +139,7 @@ describe("Get services", () => {
     for (let i = 3; i < 23; i++) {
       await inMemoryServicesRepository.create(
         makeService({
-          serviceName: `service-${i}`,
+          serviceName: ServiceName.create(`service-${i}`),
           category: "WASH",
           price: Money.create(30000),
           establishmentId: establishment.id,
@@ -164,7 +165,7 @@ describe("Get services", () => {
     expect(result.value.services).toHaveLength(1);
     const filteredService = getFirstItem(result.value.services);
 
-    expect(filteredService.serviceName).toBe("service-1");
+    expect(filteredService.serviceName.value).toBe("service-1");
 
     const result2 = await sut.execute({
       establishmentId: establishment.id.toString(),
@@ -213,7 +214,7 @@ describe("Get services", () => {
     expect(result4.value.services).toHaveLength(1);
     const cheaperService = getFirstItem(result4.value.services);
 
-    expect(cheaperService.serviceName).toBe("service-0");
+    expect(cheaperService.serviceName.value).toBe("service-0");
   });
 
   it("should not be able to get services from a non-existent establishment", async () => {
