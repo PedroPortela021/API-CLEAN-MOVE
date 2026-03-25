@@ -9,6 +9,8 @@ import { NoUpdateFieldsProvidedError } from "../../../shared/errors/no-update-fi
 import { InvalidServiceNameError } from "../../catalog/domain/value-objects/service-name";
 import { InvalidEstimatedDurationError } from "../../catalog/domain/value-objects/estimated-duration";
 import { InvalidMoneyError } from "../../catalog/domain/value-objects/money";
+import { InvalidEstimatedDurationTransitionError } from "../../catalog/domain/errors/invalid-estimated-duration-transition-error";
+import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 
 type UpdateServiceUseCaseRequest = {
   establishmentId: string;
@@ -89,13 +91,14 @@ export class UpdateServiceUseCase {
       if (
         error instanceof InvalidServiceNameError ||
         error instanceof InvalidEstimatedDurationError ||
-        error instanceof InvalidMoneyError
+        error instanceof InvalidMoneyError ||
+        error instanceof InvalidEstimatedDurationTransitionError
       ) {
         return left(new InvalidServiceUpdateInputError(error.message));
       }
-      throw error;
+      return left(new UnexpectedDomainError());
     }
-    
+
     await this.servicesRepository.save(serviceToUpdate);
 
     return right({
