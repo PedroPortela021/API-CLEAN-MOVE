@@ -20,6 +20,16 @@ export class InMemoryEstablishmentsRepository implements EstablishmentsRepositor
     return establishment;
   }
 
+  async findById(id: string): Promise<Establishment | null> {
+    const establishment = this.items.find((item) => item.id.toString() === id);
+
+    if (!establishment) {
+      return null;
+    }
+
+    return establishment;
+  }
+
   async findBySlug(slug: string): Promise<Establishment | null> {
     const establishment = this.items.find((item) => item.slug.value === slug);
 
