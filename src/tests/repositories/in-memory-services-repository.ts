@@ -70,6 +70,21 @@ export class InMemoryServicesRepository implements ServicesRepository {
     return filteredServices.slice(start, end);
   }
 
+  async findByServiceIdAndEstablishmentId(
+    serviceId: string,
+    establishmentId: string,
+  ): Promise<Service | null> {
+    const service = this.items.find(
+      (item) =>
+        item.id.toString() === serviceId &&
+        item.establishmentId.toString() === establishmentId,
+    );
+
+    if (!service) return null;
+
+    return service;
+  }
+
   async save(service: Service): Promise<void> {
     const serviceIndex = this.items.findIndex((item) =>
       item.id.equals(service.id),
