@@ -1,5 +1,11 @@
 export class ResourceNotFoundError extends Error {
-  constructor(message?: string) {
-    super(message ?? "Resource not found.");
+  constructor({
+    message,
+    resource,
+  }: Partial<{ message: string; resource: string }>) {
+    super(
+      message ??
+        `Resource not found${resource ? ": ".concat(`${resource}.`) : "."}`,
+    );
   }
 }

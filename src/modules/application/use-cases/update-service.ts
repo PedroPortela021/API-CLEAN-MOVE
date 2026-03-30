@@ -72,13 +72,13 @@ export class UpdateServiceUseCase {
       await this.establishmentsRepository.findById(establishmentId);
 
     if (!establishment) {
-      return left(new ResourceNotFoundError());
+      return left(new ResourceNotFoundError({ resource: "establishment" }));
     }
 
     const serviceToUpdate = await this.servicesRepository.findById(serviceId);
 
     if (!serviceToUpdate) {
-      return left(new ResourceNotFoundError());
+      return left(new ResourceNotFoundError({ resource: "service" }));
     }
 
     if (!serviceToUpdate.establishmentId.equals(establishment.id)) {
