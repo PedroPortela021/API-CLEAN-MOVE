@@ -11,7 +11,6 @@ import { InvalidEstimatedDurationError } from "../../catalog/domain/value-object
 import { InvalidMoneyError } from "../../catalog/domain/value-objects/money";
 import { InvalidEstimatedDurationTransitionError } from "../../catalog/domain/errors/invalid-estimated-duration-transition-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
-import { UsersRepository } from "../repositories/users-repository";
 
 type UpdateServiceUseCaseRequest = {
   establishmentId: string;
@@ -49,7 +48,6 @@ export class UpdateServiceUseCase {
   constructor(
     private servicesRepository: ServicesRepository,
     private establishmentsRepository: EstablishmentsRepository,
-    private usersRepository: UsersRepository,
   ) {}
 
   async execute({
@@ -75,18 +73,6 @@ export class UpdateServiceUseCase {
 
     if (!establishment) {
       return left(new ResourceNotFoundError());
-    }
-
-    const user = await this.usersRepository.findById(
-      establishment.ownerId.toString(),
-    );
-
-    if (!user) {
-      return left(new ResourceNotFoundError());
-    }
-
-    if (user.role !== "ESTABLISHMENT") {
-      return left(new NotAllowed());
     }
 
     const serviceToUpdate = await this.servicesRepository.findById(serviceId);
