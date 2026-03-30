@@ -35,10 +35,10 @@ describe("Update user", () => {
     await inMemoryUsersRepository.create(createdUser);
 
     const result = await sut.execute({
-      user: createdUser,
+      userId: createdUser.id.toString(),
       name: "New Name",
-      email: new Email("new-email@example.com"),
-      phone: Phone.create("21987654321"),
+      email: "new-email@example.com",
+      phone: "21987654321",
       address: Address.create({
         city: "city-new",
         country: "country-new",
@@ -66,10 +66,10 @@ describe("Update user", () => {
     const unknownUser = makeUser("CUSTOMER");
 
     const result = await sut.execute({
-      user: unknownUser,
+      userId: unknownUser.id.toString(),
       name: "New Name",
-      email: new Email("new-email@example.com"),
-      phone: Phone.create("21987654321"),
+      email: "new-email@example.com",
+      phone: "21987654321",
       address: Address.create({
         city: "city-new",
         country: "country-new",
@@ -95,10 +95,10 @@ describe("Update user", () => {
     await inMemoryUsersRepository.create(userToUpdate);
 
     const result = await sut.execute({
-      user: userToUpdate,
+      userId: userToUpdate.id.toString(),
       name: "Updated User",
-      email: new Email("existing-email@example.com"),
-      phone: Phone.create("21987654321"),
+      email: "existing-email@example.com",
+      phone: "21987654321",
       address: Address.create({
         city: "city-new",
         country: "country-new",
