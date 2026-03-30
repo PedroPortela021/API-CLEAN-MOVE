@@ -1,6 +1,7 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
-import { Address } from "../value-objects/address";
+import { Optional } from "../../../../shared/types/optional";
+import { Address, AddressProps } from "../value-objects/address";
 import { Email } from "../value-objects/email";
 import { Phone } from "../value-objects/phone";
 import { UserRole } from "../value-objects/user-role";
@@ -12,8 +13,8 @@ export type UserProps = {
   role: UserRole;
   phone: Phone;
   address: Address;
-  createdAt?: Date;
-  updatedAt?: Date;
+  createdAt: Date | null;
+  updatedAt: Date | null;
 };
 
 export class User extends AggregateRoot<UserProps> {
@@ -36,14 +37,12 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.address;
   }
 
-  get createdAt(): Date {
-    // `createdAt` é garantido no `User.create()` com default.
-    return this.props.createdAt!;
+  get createdAt() {
+    return this.props.createdAt;
   }
 
-  get updatedAt(): Date {
-    // `updatedAt` é garantido no `User.create()` com default.
-    return this.props.updatedAt!;
+  get updatedAt() {
+    return this.props.updatedAt;
   }
 
   touch() {
@@ -51,39 +50,29 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   changeName(name: string) {
-    if (!name) {
-      // TODO: Implement validation
-    }
-    if (this.props.name === name) return;
+    const normalizedName = name.trim();
 
-    this.props.name = name;
+    if (this.props.name === normalizedName) return;
+
+    this.props.name = normalizedName;
     this.touch();
   }
 
-  changeEmail(email: string) {
-    if (!email) {
-      // TODO: Implement validation
-    }
-    if (this.props.email.getValue() === email) return;
+  changeEmail(email: Email) {
+    if (this.props.email === email) return;
 
-    this.props.email = new Email(email);
+    this.props.email = email;
     this.touch();
   }
 
-  changePhone(phone: string) {
-    if (!phone) {
-      // TODO: Implement validation
-    }
-    if (this.props.phone.value === phone) return;
+  changePhone(phone: Phone) {
+    if (this.props.phone === phone) return;
 
-    this.props.phone = Phone.create(phone);
+    this.props.phone = phone;
     this.touch();
   }
 
   changeAddress(address: Address) {
-    if (!address) {
-      // TODO: Implement validation
-    }
     if (this.props.address.equals(address)) return;
 
     this.props.address = address;
@@ -91,37 +80,43 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   update(data: {
-    name?: string;
-    email?: Email;
-    phone?: Phone;
-    address?: Address;
+    name?: string | undefined;
+    email?: string | undefined;
+    phone?: string | undefined;
+    address?: AddressProps | undefined;
   }) {
+    const newEmail = data.email ? new Email(data.email) : undefined;
+
+    const newPhone = data.phone ? Phone.create(data.phone) : undefined;
+
+    const newAddress = data.address ? Address.create(data.address) : undefined;
+
     if (data.name !== undefined) {
       this.changeName(data.name);
     }
 
-    if (data.email !== undefined) {
-      this.changeEmail(data.email.toString());
+    if (newEmail) {
+      this.changeEmail(newEmail);
     }
 
-    if (data.phone !== undefined) {
-      this.changePhone(data.phone.toString());
+    if (newPhone) {
+      this.changePhone(newPhone);
     }
 
-    if (data.address !== undefined) {
-      this.changeAddress(data.address);
+    if (newAddress) {
+      this.changeAddress(newAddress);
     }
   }
 
-  static create(props: UserProps, id?: UniqueEntityId) {
-    const createdAt = props.createdAt ?? new Date();
-    const updatedAt = props.updatedAt ?? createdAt;
-
+  static create(
+    props: Optional<UserProps, "createdAt" | "updatedAt">,
+    id?: UniqueEntityId,
+  ) {
     const user = new User(
       {
         ...props,
-        createdAt,
-        updatedAt,
+        createdAt: props.createdAt ?? new Date(),
+        updatedAt: props.updatedAt ?? new Date(),
       },
       id,
     );

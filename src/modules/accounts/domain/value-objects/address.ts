@@ -1,6 +1,6 @@
 import { ValueObject } from "../../../../shared/entities/value-object";
 
-type AddressProps = {
+export type AddressProps = {
   street: string;
   country: string;
   state: string;
