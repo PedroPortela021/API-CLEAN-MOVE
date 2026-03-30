@@ -59,7 +59,7 @@ export class CreateServiceUseCase {
       await this.establishmentsRepository.findById(establishmentId);
 
     if (!establishment) {
-      return left(new ResourceNotFoundError("Establishment"));
+      return left(new ResourceNotFoundError({ resource: "Establishment" }));
     }
 
     let service;

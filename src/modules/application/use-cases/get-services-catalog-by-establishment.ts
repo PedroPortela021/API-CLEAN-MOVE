@@ -37,7 +37,7 @@ export class GetServiceCatalogByEstablishmentUseCase {
       await this.establishmentsRepository.findById(establishmentId);
 
     if (!establishment) {
-      return left(new ResourceNotFoundError("establishment"));
+      return left(new ResourceNotFoundError({ resource: "establishment" }));
     }
 
     const services = await this.servicesRepository.findManyByEstablishmentId(
