@@ -3,8 +3,10 @@ import { NotAllowed } from "../../../shared/errors/not-allowed";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
 import { makeService } from "../../../tests/factories/service-factory";
+import { makeUser } from "../../../tests/factories/user-factory";
 import { InMemoryEstablishmentsRepository } from "../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryServicesRepository } from "../../../tests/repositories/in-memory-services-repository";
+import { InMemoryUsersRepository } from "../../../tests/repositories/in-memory-users-repository";
 import { EstimatedDuration } from "../../catalog/domain/value-objects/estimated-duration";
 import { Money } from "../../catalog/domain/value-objects/money";
 import { ServiceName } from "../../catalog/domain/value-objects/service-name";
@@ -15,6 +17,7 @@ import {
 
 let inMemoryServicesRepository: InMemoryServicesRepository;
 let inMemoryEstablishmentsRepository: InMemoryEstablishmentsRepository;
+let inMemoryUsersRepository: InMemoryUsersRepository;
 
 let sut: UpdateServiceUseCase;
 
@@ -22,16 +25,22 @@ describe("Update a service", () => {
   beforeEach(() => {
     inMemoryServicesRepository = new InMemoryServicesRepository();
     inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryUsersRepository = new InMemoryUsersRepository();
 
     sut = new UpdateServiceUseCase(
       inMemoryServicesRepository,
       inMemoryEstablishmentsRepository,
+      inMemoryUsersRepository,
     );
   });
 
   it("should be able to update a service with a valid establishment and valid data", async () => {
-    const establishment = makeEstablishment();
+    const user = makeUser("ESTABLISHMENT");
+    await inMemoryUsersRepository.create(user);
 
+    const establishment = makeEstablishment({
+      ownerId: user.id,
+    });
     await inMemoryEstablishmentsRepository.create(establishment);
 
     const service = makeService({
@@ -81,8 +90,12 @@ describe("Update a service", () => {
     expect(resultService.estimatedDuration.formatted).toBe("50 - 100 min");
   });
   it("should not be able to update a service with a valid establishment and invalid estimatedDuration", async () => {
-    const establishment = makeEstablishment();
+    const user = makeUser("ESTABLISHMENT");
+    await inMemoryUsersRepository.create(user);
 
+    const establishment = makeEstablishment({
+      ownerId: user.id,
+    });
     await inMemoryEstablishmentsRepository.create(establishment);
 
     const service = makeService({
@@ -163,7 +176,12 @@ describe("Update a service", () => {
     );
   });
   it("should not be able to update a service using an establishment that is not the owner of that service", async () => {
-    const establishmentOwner = makeEstablishment();
+    const user = makeUser("ESTABLISHMENT");
+    await inMemoryUsersRepository.create(user);
+
+    const establishmentOwner = makeEstablishment({
+      ownerId: user.id,
+    });
     await inMemoryEstablishmentsRepository.create(establishmentOwner);
 
     const service = makeService({
@@ -172,7 +190,12 @@ describe("Update a service", () => {
     });
     await inMemoryServicesRepository.create(service);
 
-    const anotherEstablishment = makeEstablishment();
+    const anotherUser = makeUser("ESTABLISHMENT");
+    await inMemoryUsersRepository.create(anotherUser);
+
+    const anotherEstablishment = makeEstablishment({
+      ownerId: anotherUser.id,
+    });
     await inMemoryEstablishmentsRepository.create(anotherEstablishment);
 
     const originalUpdatedAt = service.updatedAt?.getTime();
@@ -202,8 +225,13 @@ describe("Update a service", () => {
       "Service to update",
     );
   });
-  it("should be able to update a service with a valid establishment the same data", async () => {
-    const establishment = makeEstablishment();
+  it("should be able to update a service with a valid establishment with the same data", async () => {
+    const user = makeUser("ESTABLISHMENT");
+    await inMemoryUsersRepository.create(user);
+
+    const establishment = makeEstablishment({
+      ownerId: user.id,
+    });
 
     await inMemoryEstablishmentsRepository.create(establishment);
 
@@ -249,7 +277,30 @@ describe("Update a service", () => {
 
     expect(newUpdatedAtValue === originalUpdatedAt).toBe(true);
   });
-  it.skip("should not be able to update a service using a user whose role is that of a client", async () => {
-    //TO DO: Implementar teste com customer
+  it("should not be able to update a service using a user whose role is that of a client", async () => {
+    const client = makeUser("CUSTOMER");
+
+    const service = makeService({
+      establishmentId: client.id,
+    });
+
+    await inMemoryServicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: client.id.toString(),
+      serviceId: service.id.toString(),
+      data: {
+        serviceName: "Updated service by client",
+        category: "UPHOLSTERY",
+        description: "Updated service description",
+        estimatedDuration: EstimatedDuration.create({
+          minInMinutes: 10,
+          maxInMinutes: 20,
+        }),
+        price: 3000,
+      },
+    });
+
+    expect(result.isLeft()).toBe(true);
   });
 });
