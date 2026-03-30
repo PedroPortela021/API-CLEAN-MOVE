@@ -1,3 +1,10 @@
+export class InvalidEmailError extends Error {
+  constructor(value: string) {
+    super(`Invalid Email: ${value}`);
+    this.name = "InvalidEmailError";
+  }
+}
+
 export class Email {
   private readonly value: string;
 
@@ -10,7 +17,7 @@ export class Email {
    */
   constructor(value: string) {
     if (!Email.isValid(value)) {
-      throw new Error(`Invalid email address: ${value}`);
+      throw new InvalidEmailError(`Invalid email address: ${value}`);
     }
     this.value = value;
   }

@@ -1,22 +1,36 @@
 import { User } from "../../../accounts/domain/entities/user";
-import { Address } from "../../../accounts/domain/value-objects/address";
-import { Email } from "../../../accounts/domain/value-objects/email";
-import { Phone } from "../../../accounts/domain/value-objects/phone";
+import {
+  AddressProps,
+  InvalidAddressError,
+} from "../../../accounts/domain/value-objects/address";
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { UsersRepository } from "../../repositories/users-repository";
+import { InvalidEmailError } from "../../../accounts/domain/value-objects/email";
+import { InvalidPhoneError } from "../../../accounts/domain/value-objects/phone";
+import { InvalidServiceUpdateInputError } from "../update-service";
+import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
 
 type UpdateUserUseCaseRequest = {
-  user: User;
+  userId: string;
   name?: string;
-  email?: Email;
-  phone?: Phone;
-  address?: Address;
+  email?: string;
+  phone?: string;
+  address?: AddressProps;
 };
 
+export class InvalidUserUpdateInputError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "InvalidUserUpdateInputError";
+  }
+}
+
 type UpdateUserUseCaseResponse = Either<
-  ResourceNotFoundError | ResourceAlreadyExistsError,
+  | ResourceNotFoundError
+  | ResourceAlreadyExistsError
+  | InvalidServiceUpdateInputError,
   {
     user: User;
   }
@@ -26,22 +40,16 @@ export class UpdateUserUseCase {
   constructor(private usersRepository: UsersRepository) {}
 
   async execute({
-    user,
+    userId,
     name,
     email,
     phone,
     address,
   }: UpdateUserUseCaseRequest): Promise<UpdateUserUseCaseResponse> {
-    const existingUser = await this.usersRepository.findById(
-      user.id.toString(),
-    );
+    const existingUser = await this.usersRepository.findById(userId);
 
     if (!existingUser) {
       return left(new ResourceNotFoundError("User not found."));
-    }
-
-    if (name !== undefined) {
-      existingUser.changeName(name);
     }
 
     if (email !== undefined) {
@@ -57,12 +65,23 @@ export class UpdateUserUseCase {
       }
     }
 
-    existingUser.update({
-      ...(name !== undefined ? { name } : {}),
-      ...(email !== undefined ? { email } : {}),
-      ...(phone !== undefined ? { phone } : {}),
-      ...(address !== undefined ? { address } : {}),
-    });
+    try {
+      existingUser.update({
+        name,
+        email,
+        phone,
+        address,
+      });
+    } catch (error) {
+      if (
+        error instanceof InvalidEmailError ||
+        error instanceof InvalidPhoneError ||
+        error instanceof InvalidAddressError
+      ) {
+        return left(new InvalidUserUpdateInputError(error.message));
+      }
+      return left(new UnexpectedDomainError());
+    }
 
     await this.usersRepository.save(existingUser);
 
