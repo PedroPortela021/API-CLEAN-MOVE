@@ -1,6 +1,7 @@
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { NotAllowed } from "../../../shared/errors/not-allowed";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
+import { makeCustomer } from "../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
 import { makeService } from "../../../tests/factories/service-factory";
 import { InMemoryEstablishmentsRepository } from "../../../tests/repositories/in-memory-establishment-repository";
@@ -249,7 +250,40 @@ describe("Update a service", () => {
 
     expect(newUpdatedAtValue === originalUpdatedAt).toBe(true);
   });
-  it.skip("should not be able to update a service using a user whose role is that of a client", async () => {
-    //TO DO: Implementar teste com customer
+  it("should not be able to update a service using a user whose role is that of a client", async () => {
+    const customer = makeCustomer();
+
+    const service = makeService({
+      establishmentId: customer.id,
+      serviceName: ServiceName.create("Service to update by a customer"),
+      category: "WASH",
+      description: "Service description to update",
+      estimatedDuration: EstimatedDuration.create({
+        minInMinutes: 10,
+        maxInMinutes: 20,
+      }),
+      price: Money.create(3000),
+    });
+
+    await inMemoryServicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      data: {
+        serviceName: "Updated service by a customer",
+        category: "WASH",
+        description: "Updated service description",
+        estimatedDuration: EstimatedDuration.create({
+          minInMinutes: 10,
+          maxInMinutes: 20,
+        }),
+        price: 3000,
+      },
+    });
+
+    expect(result.isLeft()).toBe(true);
+
+    expect(result.value).toBeInstanceOf(ResourceNotFoundError);
   });
 });
