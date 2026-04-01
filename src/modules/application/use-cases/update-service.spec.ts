@@ -1,5 +1,5 @@
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { makeCustomer } from "../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
@@ -194,7 +194,7 @@ describe("Update a service", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(NotAllowed);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
     expect(
       inMemoryServicesRepository.items[0]?.updatedAt?.getTime() ===
         originalUpdatedAt,

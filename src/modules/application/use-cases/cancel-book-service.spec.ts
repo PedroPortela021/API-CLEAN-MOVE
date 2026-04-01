@@ -1,5 +1,5 @@
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { InvalidAppointmentStatusTransitionError } from "../../scheduling/domain/errors/invalid-appointment-status-transition-error";
 import { makeAppointment } from "../../../tests/factories/appointment-factory";
@@ -141,7 +141,7 @@ describe("Cancel book service", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(NotAllowed);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
     expect(appointmentsRepository.items[0]?.status).toBe("SCHEDULED");
   });
 

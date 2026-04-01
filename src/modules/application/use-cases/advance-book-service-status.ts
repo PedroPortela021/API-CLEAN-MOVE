@@ -1,7 +1,7 @@
 import { Either, left, right } from "../../../shared/either";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { InvalidAppointmentStatusTransitionError } from "../../scheduling/domain/errors/invalid-appointment-status-transition-error";
 import { AppointmentsRepository } from "../repositories/appointments-repository";
@@ -18,7 +18,7 @@ type AdvanceBookServiceStatusUseCaseRequest = {
 
 type AdvanceBookServiceStatusUseCaseResponse = Either<
   | ResourceNotFoundError
-  | NotAllowed
+  | NotAllowedError
   | InvalidAppointmentStatusTransitionError
   | UnexpectedDomainError,
   {
@@ -44,7 +44,7 @@ export class AdvanceBookServiceStatusUseCase {
     }
 
     if (!canAdvanceAppointmentStatus({ appointment, author })) {
-      return left(new NotAllowed());
+      return left(new NotAllowedError());
     }
 
     const establishment = await this.establishmentsRepository.findById(

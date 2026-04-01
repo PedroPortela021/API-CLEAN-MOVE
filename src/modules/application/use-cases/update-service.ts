@@ -1,6 +1,6 @@
 import { Either, left, right } from "../../../shared/either";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { Service } from "../../catalog/domain/entities/services";
 import { ServiceCategory } from "../../catalog/domain/value-objects/service-category";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
@@ -30,7 +30,7 @@ type UpdateServiceUseCaseRequest = {
 type UpdateServiceUseCaseResponse = Either<
   | NoUpdateFieldsProvidedError
   | ResourceNotFoundError
-  | NotAllowed
+  | NotAllowedError
   | InvalidServiceUpdateInputError,
   {
     service: Service;
@@ -82,7 +82,7 @@ export class UpdateServiceUseCase {
     }
 
     if (!serviceToUpdate.establishmentId.equals(establishment.id)) {
-      return left(new NotAllowed());
+      return left(new NotAllowedError());
     }
 
     try {

@@ -2,7 +2,7 @@ import { EstablishmentClosedError } from "../../establishments/domain/errors/est
 import { InvalidBookServiceInputError } from "../../scheduling/domain/errors/invalid-book-service-input-error";
 import { TimeSlotAlreadyBookedError } from "../../scheduling/domain/errors/time-slot-already-booked-error";
 import { TimeSlot } from "../../scheduling/domain/value-objects/time-slot";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
@@ -273,7 +273,7 @@ describe("Rebook service", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(NotAllowed);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
     expect(appointmentsRepository.items[0]?.slot.startsAt).toEqual(
       new Date("2026-04-06T10:00:00"),
     );

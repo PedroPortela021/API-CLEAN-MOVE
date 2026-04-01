@@ -1,7 +1,7 @@
 import { Either, left, right } from "../../../shared/either";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { InvalidAppointmentStatusTransitionError } from "../../scheduling/domain/errors/invalid-appointment-status-transition-error";
@@ -27,7 +27,7 @@ type RebookServiceUseCaseRequest = {
 
 type RebookServiceUseCaseResponse = Either<
   | ResourceNotFoundError
-  | NotAllowed
+  | NotAllowedError
   | EstablishmentClosedError
   | TimeSlotAlreadyBookedError
   | InvalidBookServiceInputError
@@ -56,7 +56,7 @@ export class RebookServiceUseCase {
     }
 
     if (!isAppointmentAuthor(appointment, author)) {
-      return left(new NotAllowed());
+      return left(new NotAllowedError());
     }
 
     let slot: TimeSlot;

@@ -3,7 +3,7 @@ import { EstimatedDuration } from "../../catalog/domain/value-objects/estimated-
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { OperatingHours } from "../../establishments/domain/value-objects/operating-hours";
 import { TimeSlotAlreadyBookedError } from "../../scheduling/domain/errors/time-slot-already-booked-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { makeCustomer } from "../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
@@ -49,7 +49,7 @@ describe("Book service", () => {
     });
 
     expect(result.isLeft()).toBe(true);
-    expect(result.value).toBeInstanceOf(NotAllowed);
+    expect(result.value).toBeInstanceOf(NotAllowedError);
     expect(customersRepository.items).toHaveLength(0);
     expect(appointmentsRepository.items).toHaveLength(0);
   });
