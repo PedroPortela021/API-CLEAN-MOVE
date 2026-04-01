@@ -27,7 +27,7 @@ export class ListFavoriteEstablishmentsUseCase {
     const customer = await this.customersRepository.findById(customerId);
 
     if (!customer) {
-      return left(new ResourceNotFoundError("Customer not found."));
+      return left(new ResourceNotFoundError({ resource: "customer" }));
     }
 
     const favorites =
