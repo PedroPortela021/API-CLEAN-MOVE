@@ -23,7 +23,7 @@ export class GetMeUseCase {
     const user = await this.usersRepository.findById(userId);
 
     if (!user) {
-      return left(new ResourceNotFoundError("User not found."));
+      return left(new ResourceNotFoundError({ resource: "user" }));
     }
 
     return right({

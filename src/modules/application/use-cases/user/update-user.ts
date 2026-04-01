@@ -49,7 +49,7 @@ export class UpdateUserUseCase {
     const existingUser = await this.usersRepository.findById(userId);
 
     if (!existingUser) {
-      return left(new ResourceNotFoundError("User not found."));
+      return left(new ResourceNotFoundError({ resource: "user" }));
     }
 
     if (email !== undefined) {
