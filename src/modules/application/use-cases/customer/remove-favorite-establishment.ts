@@ -34,11 +34,11 @@ export class RemoveFavoriteEstablishmentUseCase {
     ]);
 
     if (!customer) {
-      return left(new ResourceNotFoundError("Customer not found."));
+      return left(new ResourceNotFoundError({ resource: "customer" }));
     }
 
     if (!favorite) {
-      return left(new ResourceNotFoundError("Favorite not found."));
+      return left(new ResourceNotFoundError({ resource: "favorite" }));
     }
 
     await this.favoritesRepository.delete(favorite);

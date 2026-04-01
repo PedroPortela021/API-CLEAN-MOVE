@@ -24,7 +24,7 @@ export class GetCustomerUseCase {
     const customer = await this.customersRepository.findByCpf(cpf.toString());
 
     if (!customer) {
-      return left(new ResourceNotFoundError("Customer not found."));
+      return left(new ResourceNotFoundError({ resource: "customer" }));
     }
 
     return right({

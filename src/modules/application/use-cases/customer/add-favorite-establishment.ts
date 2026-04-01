@@ -40,11 +40,11 @@ export class AddFavoriteEstablishmentUseCase {
     ]);
 
     if (!customer) {
-      return left(new ResourceNotFoundError("Customer not found."));
+      return left(new ResourceNotFoundError({ resource: "customer" }));
     }
 
     if (!establishment) {
-      return left(new ResourceNotFoundError("Establishment not found."));
+      return left(new ResourceNotFoundError({ resource: "establishment" }));
     }
 
     if (existingFavorite) {
