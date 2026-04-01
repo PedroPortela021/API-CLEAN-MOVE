@@ -36,3 +36,16 @@ export function canBookAppointment({
 
   return author.authorId === establishmentId;
 }
+
+export function canAdvanceAppointmentStatus({
+  appointment,
+  author,
+}: {
+  appointment: Appointment;
+  author: AppointmentAuthor;
+}) {
+  return (
+    isAppointmentAuthor(appointment, author) &&
+    author.authorType === "ESTABLISHMENT"
+  );
+}
