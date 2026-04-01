@@ -2,6 +2,7 @@ import { EstablishmentClosedError } from "../../establishments/domain/errors/est
 import { InvalidBookServiceInputError } from "../../scheduling/domain/errors/invalid-book-service-input-error";
 import { TimeSlotAlreadyBookedError } from "../../scheduling/domain/errors/time-slot-already-booked-error";
 import { TimeSlot } from "../../scheduling/domain/value-objects/time-slot";
+import { NotAllowed } from "../../../shared/errors/not-allowed";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { makeEstablishment } from "../../../tests/factories/establishment-factory";
@@ -29,6 +30,10 @@ describe("Rebook service", () => {
   it("should return a resource not found error when the appointment does not exist", async () => {
     const result = await sut.execute({
       appointmentId: "appointment-1",
+      author: {
+        authorType: "CUSTOMER",
+        authorId: "customer-1",
+      },
       startsAt: new Date("2026-04-06T14:00:00"),
     });
 
@@ -48,6 +53,10 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
       startsAt: new Date("2026-04-06T14:00:00"),
     });
 
@@ -73,6 +82,10 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "ESTABLISHMENT",
+        authorId: establishment.id.toString(),
+      },
       startsAt: new Date("2026-04-06T19:00:00"),
     });
 
@@ -98,6 +111,10 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
       startsAt: new Date("2026-04-06T14:00:00"),
     });
 
@@ -141,6 +158,10 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
       startsAt: new Date("2026-04-06T13:30:00"),
     });
 
@@ -179,6 +200,10 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "ESTABLISHMENT",
+        authorId: establishment.id.toString(),
+      },
       startsAt: new Date("2026-04-06T10:00:00"),
     });
 
@@ -210,12 +235,45 @@ describe("Rebook service", () => {
 
     const result = await sut.execute({
       appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
       startsAt: new Date("2026-04-06T14:00:00"),
     });
 
     expect(result.isLeft()).toBe(true);
 
     expect(result.value).toBeInstanceOf(InvalidBookServiceInputError);
+    expect(appointmentsRepository.items[0]?.slot.startsAt).toEqual(
+      new Date("2026-04-06T10:00:00"),
+    );
+  });
+
+  it("should return not allowed when the author does not own the appointment or establishment", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const appointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+        customerId: new UniqueEntityId("customer-1"),
+      },
+      new UniqueEntityId("appointment-1"),
+    );
+
+    await establishmentsRepository.create(establishment);
+    await appointmentsRepository.create(appointment);
+
+    const result = await sut.execute({
+      appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: "customer-2",
+      },
+      startsAt: new Date("2026-04-06T14:00:00"),
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(NotAllowed);
     expect(appointmentsRepository.items[0]?.slot.startsAt).toEqual(
       new Date("2026-04-06T10:00:00"),
     );

@@ -1,6 +1,7 @@
 import { Either, left, right } from "../../../shared/either";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
+import { NotAllowed } from "../../../shared/errors/not-allowed";
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { InvalidAppointmentStatusTransitionError } from "../../scheduling/domain/errors/invalid-appointment-status-transition-error";
@@ -13,14 +14,20 @@ import {
 } from "../../scheduling/domain/value-objects/time-slot";
 import { AppointmentsRepository } from "../repositories/appointments-repository";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
+import {
+  AppointmentAuthor,
+  isAppointmentAuthor,
+} from "../../scheduling/domain/policies/appointment-authorization";
 
 type RebookServiceUseCaseRequest = {
   appointmentId: string;
+  author: AppointmentAuthor;
   startsAt: Date;
 };
 
 type RebookServiceUseCaseResponse = Either<
   | ResourceNotFoundError
+  | NotAllowed
   | EstablishmentClosedError
   | TimeSlotAlreadyBookedError
   | InvalidBookServiceInputError
@@ -38,6 +45,7 @@ export class RebookServiceUseCase {
 
   async execute({
     appointmentId,
+    author,
     startsAt,
   }: RebookServiceUseCaseRequest): Promise<RebookServiceUseCaseResponse> {
     const appointment =
@@ -47,12 +55,8 @@ export class RebookServiceUseCase {
       return left(new ResourceNotFoundError({ resource: "appointment" }));
     }
 
-    const establishment = await this.establishmentsRepository.findById(
-      appointment.establishmentId.toString(),
-    );
-
-    if (!establishment) {
-      return left(new ResourceNotFoundError({ resource: "establishment" }));
+    if (!isAppointmentAuthor(appointment, author)) {
+      return left(new NotAllowed());
     }
 
     let slot: TimeSlot;
@@ -74,6 +78,14 @@ export class RebookServiceUseCase {
       return left(new UnexpectedDomainError());
     }
 
+    const establishment = await this.establishmentsRepository.findById(
+      appointment.establishmentId.toString(),
+    );
+
+    if (!establishment) {
+      return left(new ResourceNotFoundError({ resource: "establishment" }));
+    }
+
     const isEstablishmentOpen = establishment.isOpenDuring(startsAt, endsAt);
 
     if (!isEstablishmentOpen) {
@@ -82,7 +94,7 @@ export class RebookServiceUseCase {
 
     const overlapedAppointments =
       await this.appointmentsRepository.findManyByEstablishmentIdAndInterval(
-        establishment.id.toString(),
+        appointment.establishmentId.toString(),
         startsAt,
         endsAt,
       );
