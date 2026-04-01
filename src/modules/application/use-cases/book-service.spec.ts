@@ -13,44 +13,18 @@ import { InMemoryEstablishmentsRepository } from "../../../tests/repositories/in
 import { InMemoryServicesRepository } from "../../../tests/repositories/in-memory-services-repository";
 import { BookServiceUseCase } from "./book-service";
 
-class TrackingCustomersRepository extends InMemoryCustomersRepository {
-  public findByIdCalls = 0;
-
-  async findById(id: string) {
-    this.findByIdCalls += 1;
-    return super.findById(id);
-  }
-}
-
-class TrackingAppointmentsRepository extends InMemoryAppointmentsRepository {
-  public intervalLookupCalls = 0;
-
-  async findManyByEstablishmentIdAndInterval(
-    establishmentId: string,
-    startsAt: Date,
-    endsAt: Date,
-  ) {
-    this.intervalLookupCalls += 1;
-    return super.findManyByEstablishmentIdAndInterval(
-      establishmentId,
-      startsAt,
-      endsAt,
-    );
-  }
-}
-
-let appointmentsRepository: TrackingAppointmentsRepository;
+let appointmentsRepository: InMemoryAppointmentsRepository;
 let establishmentsRepository: InMemoryEstablishmentsRepository;
-let customersRepository: TrackingCustomersRepository;
+let customersRepository: InMemoryCustomersRepository;
 let servicesRepository: InMemoryServicesRepository;
 
 let sut: BookServiceUseCase;
 
 describe("Book service", () => {
   beforeEach(() => {
-    appointmentsRepository = new TrackingAppointmentsRepository();
+    appointmentsRepository = new InMemoryAppointmentsRepository();
     establishmentsRepository = new InMemoryEstablishmentsRepository();
-    customersRepository = new TrackingCustomersRepository();
+    customersRepository = new InMemoryCustomersRepository();
     servicesRepository = new InMemoryServicesRepository();
 
     sut = new BookServiceUseCase(
@@ -84,8 +58,8 @@ describe("Book service", () => {
     }
 
     expect(result.value).toBeInstanceOf(InactiveServiceError);
-    expect(customersRepository.findByIdCalls).toBe(0);
-    expect(appointmentsRepository.intervalLookupCalls).toBe(0);
+    expect(customersRepository.items).toHaveLength(0);
+    expect(appointmentsRepository.items).toHaveLength(0);
   });
 
   it("should return a closed establishment error before looking up customer or appointments", async () => {
@@ -110,8 +84,7 @@ describe("Book service", () => {
     }
 
     expect(result.value).toBeInstanceOf(EstablishmentClosedError);
-    expect(customersRepository.findByIdCalls).toBe(0);
-    expect(appointmentsRepository.intervalLookupCalls).toBe(0);
+    expect(appointmentsRepository.items).toHaveLength(0);
   });
 
   it("should return a closed establishment error when the appointment crosses midnight", async () => {
@@ -158,8 +131,7 @@ describe("Book service", () => {
     }
 
     expect(result.value).toBeInstanceOf(EstablishmentClosedError);
-    expect(customersRepository.findByIdCalls).toBe(0);
-    expect(appointmentsRepository.intervalLookupCalls).toBe(0);
+    expect(appointmentsRepository.items).toHaveLength(0);
   });
 
   it("should book a service when the request is valid", async () => {
@@ -187,7 +159,17 @@ describe("Book service", () => {
       throw result.value;
     }
 
+    expect(appointmentsRepository.items).toHaveLength(1);
     expect(result.value.appointment).toBe(appointmentsRepository.items[0]);
+    expect(result.value.appointment.customerId.toString()).toBe(
+      customer.id.toString(),
+    );
+    expect(result.value.appointment.establishmentId.toString()).toBe(
+      establishment.id.toString(),
+    );
+    expect(result.value.appointment.service.serviceId.toString()).toBe(
+      service.id.toString(),
+    );
   });
 
   it("should return a conflict error when the time slot is already booked", async () => {
@@ -223,6 +205,53 @@ describe("Book service", () => {
       throw new Error("Expected overlapping booking to fail.");
     }
 
+    expect(appointmentsRepository.items).toHaveLength(1);
     expect(secondBooking.value).toBeInstanceOf(TimeSlotAlreadyBookedError);
+  });
+
+  it("should ignore cancelled appointments when checking for time conflicts", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+    });
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const firstBooking = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      bookedByCustomer: true,
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(firstBooking.isRight()).toBe(true);
+
+    if (firstBooking.isLeft()) {
+      throw firstBooking.value;
+    }
+
+    firstBooking.value.appointment.cancel();
+    await appointmentsRepository.save(firstBooking.value.appointment);
+
+    const secondBooking = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      bookedByCustomer: true,
+      startsAt: new Date("2026-04-06T10:30:00"),
+    });
+
+    expect(secondBooking.isRight()).toBe(true);
+
+    if (secondBooking.isLeft()) {
+      throw secondBooking.value;
+    }
+
+    expect(appointmentsRepository.items).toHaveLength(2);
+    expect(secondBooking.value.appointment).toBe(appointmentsRepository.items[1]);
   });
 });
