@@ -3,7 +3,6 @@ import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { InactiveServiceError } from "../../catalog/domain/errors/inactive-service-error";
-import { InvalidServiceNameError } from "../../catalog/domain/value-objects/service-name";
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { InvalidBookServiceInputError } from "../../scheduling/domain/errors/invalid-book-service-input-error";
@@ -144,7 +143,6 @@ export class BookServiceUseCase {
       });
     } catch (error) {
       if (
-        error instanceof InvalidServiceNameError ||
         error instanceof InvalidBookedServiceSnapshotError ||
         error instanceof InvalidTimeSlotError
       ) {
