@@ -252,6 +252,8 @@ describe("Book service", () => {
     }
 
     expect(appointmentsRepository.items).toHaveLength(2);
-    expect(secondBooking.value.appointment).toBe(appointmentsRepository.items[1]);
+    expect(secondBooking.value.appointment).toBe(
+      appointmentsRepository.items[1],
+    );
   });
 });
