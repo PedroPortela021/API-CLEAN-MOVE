@@ -82,7 +82,11 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
     return appointment;
   }
 
-  cancel(now = new Date()) {
+  touch() {
+    this.props.updatedAt = new Date();
+  }
+
+  cancel() {
     if (this.props.status === "CANCELLED") {
       throw new InvalidAppointmentStatusTransitionError();
     }
@@ -92,16 +96,30 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
     }
 
     this.props.status = "CANCELLED";
-    this.props.cancelledAt = now;
-    this.props.updatedAt = now;
+    this.props.cancelledAt = new Date();
+    this.touch();
   }
 
-  reschedule(newSlot: TimeSlot, now = new Date()) {
+  advanceStatus() {
+    if (this.props.status === "CANCELLED" || this.props.status === "FINISHED") {
+      throw new InvalidAppointmentStatusTransitionError();
+    }
+
+    if (this.props.status === "SCHEDULED") {
+      this.props.status = "IN_PROGRESS";
+    } else {
+      this.props.status = "FINISHED";
+    }
+
+    this.touch();
+  }
+
+  reschedule(newSlot: TimeSlot) {
     if (this.props.status !== "SCHEDULED") {
       throw new InvalidAppointmentStatusTransitionError();
     }
 
     this.props.slot = newSlot;
-    this.props.updatedAt = now;
+    this.touch();
   }
 }
