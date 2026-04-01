@@ -2,11 +2,16 @@ import { Either, left, right } from "../../../shared/either";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
+import { NotAllowed } from "../../../shared/errors/not-allowed";
 import { InactiveServiceError } from "../../catalog/domain/errors/inactive-service-error";
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { InvalidBookServiceInputError } from "../../scheduling/domain/errors/invalid-book-service-input-error";
 import { TimeSlotAlreadyBookedError } from "../../scheduling/domain/errors/time-slot-already-booked-error";
+import {
+  AppointmentAuthor,
+  canBookAppointment,
+} from "../../scheduling/domain/policies/appointment-authorization";
 import {
   BookedServiceSnapshot,
   InvalidBookedServiceSnapshotError,
@@ -24,12 +29,13 @@ type BookServiceUseCaseRequest = {
   establishmentId: string;
   customerId: string;
   serviceId: string;
-  bookedByCustomer: boolean;
+  author: AppointmentAuthor;
   startsAt: Date;
 };
 
 type BookServiceUseCaseResponse = Either<
   | ResourceNotFoundError
+  | NotAllowed
   | InactiveServiceError
   | EstablishmentClosedError
   | TimeSlotAlreadyBookedError
@@ -52,9 +58,19 @@ export class BookServiceUseCase {
     establishmentId,
     customerId,
     serviceId,
-    bookedByCustomer,
+    author,
     startsAt,
   }: BookServiceUseCaseRequest): Promise<BookServiceUseCaseResponse> {
+    if (
+      !canBookAppointment({
+        author,
+        customerId,
+        establishmentId,
+      })
+    ) {
+      return left(new NotAllowed());
+    }
+
     const establishment =
       await this.establishmentsRepository.findById(establishmentId);
 
@@ -127,6 +143,7 @@ export class BookServiceUseCase {
     }
 
     let appointment;
+    const bookedByCustomer = author.authorType === "CUSTOMER";
 
     try {
       appointment = Appointment.create({

@@ -20,3 +20,19 @@ export function isAppointmentAuthor(
 
   return appointment.establishmentId.toString() === author.authorId;
 }
+
+export function canBookAppointment({
+  author,
+  customerId,
+  establishmentId,
+}: {
+  author: AppointmentAuthor;
+  customerId: string;
+  establishmentId: string;
+}) {
+  if (author.authorType === "CUSTOMER") {
+    return author.authorId === customerId;
+  }
+
+  return author.authorId === establishmentId;
+}
