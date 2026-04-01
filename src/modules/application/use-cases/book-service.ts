@@ -2,7 +2,7 @@ import { Either, left, right } from "../../../shared/either";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
-import { NotAllowed } from "../../../shared/errors/not-allowed";
+import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { InactiveServiceError } from "../../catalog/domain/errors/inactive-service-error";
 import { EstablishmentClosedError } from "../../establishments/domain/errors/establishment-closed-error";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
@@ -35,7 +35,7 @@ type BookServiceUseCaseRequest = {
 
 type BookServiceUseCaseResponse = Either<
   | ResourceNotFoundError
-  | NotAllowed
+  | NotAllowedError
   | InactiveServiceError
   | EstablishmentClosedError
   | TimeSlotAlreadyBookedError
@@ -68,7 +68,7 @@ export class BookServiceUseCase {
         establishmentId,
       })
     ) {
-      return left(new NotAllowed());
+      return left(new NotAllowedError());
     }
 
     const establishment =
