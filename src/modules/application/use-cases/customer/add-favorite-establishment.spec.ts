@@ -5,6 +5,7 @@ import { makeEstablishment } from "../../../../../tests/factories/establishment-
 import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryFavoritesRepository } from "../../../../../tests/repositories/in-memory-favorites-repository";
+import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
 import { AddFavoriteEstablishmentUseCase } from "./add-favorite-establishment";
 
 let inMemoryCustomersRepository: InMemoryCustomersRepository;
@@ -15,7 +16,9 @@ let sut: AddFavoriteEstablishmentUseCase;
 describe("Add favorite establishment", () => {
   beforeEach(() => {
     inMemoryCustomersRepository = new InMemoryCustomersRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      new InMemoryServicesRepository(),
+    );
     inMemoryFavoritesRepository = new InMemoryFavoritesRepository();
 
     sut = new AddFavoriteEstablishmentUseCase(

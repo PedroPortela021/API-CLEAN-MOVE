@@ -16,7 +16,9 @@ let sut: GetServiceCatalogByEstablishmentUseCase;
 describe("Get services", () => {
   beforeEach(() => {
     inMemoryServicesRepository = new InMemoryServicesRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      inMemoryServicesRepository,
+    );
 
     sut = new GetServiceCatalogByEstablishmentUseCase(
       inMemoryServicesRepository,
