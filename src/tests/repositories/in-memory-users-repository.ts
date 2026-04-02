@@ -1,5 +1,5 @@
-import { User } from "../../modules/accounts/domain/entities/user";
-import { UsersRepository } from "../../modules/application/repositories/users-repository";
+import { User } from "../../contexts/identity-access/domain/accounts/entities/user";
+import { UsersRepository } from "../../contexts/identity-access/application/repositories/users-repository";
 
 export class InMemoryUsersRepository implements UsersRepository {
   public items: User[] = [];

@@ -1,8 +1,8 @@
-import { User, UserProps } from "../../modules/accounts/domain/entities/user";
-import { Address } from "../../modules/accounts/domain/value-objects/address";
-import { Email } from "../../modules/accounts/domain/value-objects/email";
-import { Phone } from "../../modules/accounts/domain/value-objects/phone";
-import { UserRole } from "../../modules/accounts/domain/value-objects/user-role";
+import { User, UserProps } from "../../contexts/identity-access/domain/accounts/entities/user";
+import { Address } from "../../contexts/identity-access/domain/accounts/value-objects/address";
+import { Email } from "../../contexts/identity-access/domain/accounts/value-objects/email";
+import { Phone } from "../../contexts/identity-access/domain/accounts/value-objects/phone";
+import { UserRole } from "../../contexts/identity-access/domain/accounts/value-objects/user-role";
 import { UniqueEntityId } from "../../shared/entities/unique-entity-id";
 import { faker } from "@faker-js/faker";
 

@@ -1,5 +1,5 @@
-import { EstablishmentsRepository } from "../../modules/application/repositories/establishment-repository";
-import { Establishment } from "../../modules/establishments/domain/entities/establishment";
+import { EstablishmentsRepository } from "../../contexts/booking-operations/application/repositories/establishment-repository";
+import { Establishment } from "../../contexts/booking-operations/domain/establishments/entities/establishment";
 
 export class InMemoryEstablishmentsRepository implements EstablishmentsRepository {
   public items: Establishment[] = [];

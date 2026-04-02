@@ -1,6 +1,6 @@
-import { ServicesRepository } from "../../modules/application/repositories/services-repository";
-import { Service } from "../../modules/catalog/domain/entities/services";
-import { ServiceCategory } from "../../modules/catalog/domain/value-objects/service-category";
+import { ServicesRepository } from "../../contexts/booking-operations/application/repositories/services-repository";
+import { Service } from "../../contexts/booking-operations/domain/catalog/entities/services";
+import { ServiceCategory } from "../../contexts/booking-operations/domain/catalog/value-objects/service-category";
 
 export class InMemoryServicesRepository implements ServicesRepository {
   public items: Service[] = [];

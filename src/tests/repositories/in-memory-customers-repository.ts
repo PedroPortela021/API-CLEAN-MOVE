@@ -1,5 +1,5 @@
-import { CustomersRepository } from "../../modules/application/repositories/customers-repository";
-import { Customer } from "../../modules/customer/domain/entities/customer";
+import { CustomersRepository } from "../../contexts/booking-operations/application/repositories/customers-repository";
+import { Customer } from "../../contexts/booking-operations/domain/customer/entities/customer";
 
 export class InMemoryCustomersRepository implements CustomersRepository {
   public items: Customer[] = [];

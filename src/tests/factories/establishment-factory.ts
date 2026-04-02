@@ -1,9 +1,9 @@
 import {
   Establishment,
   EstablishmentProps,
-} from "../../modules/establishments/domain/entities/establishment";
-import { Cnpj } from "../../modules/establishments/domain/value-objects/cnpj";
-import { OperatingHours } from "../../modules/establishments/domain/value-objects/operating-hours";
+} from "../../contexts/booking-operations/domain/establishments/entities/establishment";
+import { Cnpj } from "../../contexts/booking-operations/domain/establishments/value-objects/cnpj";
+import { OperatingHours } from "../../contexts/booking-operations/domain/establishments/value-objects/operating-hours";
 import { UniqueEntityId } from "../../shared/entities/unique-entity-id";
 import { faker } from "@faker-js/faker";
 

@@ -1,0 +1,12 @@
+import { Establishment } from "../../domain/establishments/entities/establishment";
+
+export abstract class EstablishmentsRepository {
+  abstract create(data: Establishment): Promise<void>;
+  abstract findById(id: string): Promise<Establishment | null>;
+  abstract findByCnpj(cnpj: string): Promise<Establishment | null>;
+  abstract findBySlug(slug: string): Promise<Establishment | null>;
+  abstract findBySlugAndCnpj(
+    cnpj: string,
+    slug: string,
+  ): Promise<Establishment | null>;
+}

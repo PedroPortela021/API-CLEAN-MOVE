@@ -1,8 +1,8 @@
 import {
   Customer,
   CustomerProps,
-} from "../../modules/customer/domain/entities/customer";
-import { Cpf } from "../../modules/accounts/domain/value-objects/cpf";
+} from "../../contexts/booking-operations/domain/customer/entities/customer";
+import { Cpf } from "../../contexts/identity-access/domain/accounts/value-objects/cpf";
 import { UniqueEntityId } from "../../shared/entities/unique-entity-id";
 
 export function makeCustomer(

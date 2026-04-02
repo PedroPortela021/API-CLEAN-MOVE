@@ -1,9 +1,9 @@
 import {
   Appointment,
   AppointmentProps,
-} from "../../modules/scheduling/domain/entities/appointment";
-import { BookedServiceSnapshot } from "../../modules/scheduling/domain/value-objects/booked-service-snapshot";
-import { TimeSlot } from "../../modules/scheduling/domain/value-objects/time-slot";
+} from "../../contexts/booking-operations/domain/scheduling/entities/appointment";
+import { BookedServiceSnapshot } from "../../contexts/booking-operations/domain/scheduling/value-objects/booked-service-snapshot";
+import { TimeSlot } from "../../contexts/booking-operations/domain/scheduling/value-objects/time-slot";
 import { UniqueEntityId } from "../../shared/entities/unique-entity-id";
 
 export function makeAppointment(

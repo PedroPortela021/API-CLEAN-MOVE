@@ -1,12 +1,12 @@
 import {
   Service,
   ServiceProps,
-} from "../../modules/catalog/domain/entities/services";
+} from "../../contexts/booking-operations/domain/catalog/entities/services";
 import { UniqueEntityId } from "../../shared/entities/unique-entity-id";
-import { EstimatedDuration } from "../../modules/catalog/domain/value-objects/estimated-duration";
-import { Money } from "../../modules/catalog/domain/value-objects/money";
+import { EstimatedDuration } from "../../contexts/booking-operations/domain/catalog/value-objects/estimated-duration";
+import { Money } from "../../contexts/booking-operations/domain/catalog/value-objects/money";
 import { faker } from "@faker-js/faker";
-import { ServiceName } from "../../modules/catalog/domain/value-objects/service-name";
+import { ServiceName } from "../../contexts/booking-operations/domain/catalog/value-objects/service-name";
 
 export function makeService(
   override?: Partial<ServiceProps>,

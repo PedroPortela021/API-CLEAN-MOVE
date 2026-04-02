@@ -1,5 +1,5 @@
-import { FavoritesRepository } from "../../modules/application/repositories/favorites-repository";
-import { FavoriteEstablishment } from "../../modules/customer/domain/entities/favorite-establishment";
+import { FavoritesRepository } from "../../contexts/booking-operations/application/repositories/favorites-repository";
+import { FavoriteEstablishment } from "../../contexts/booking-operations/domain/customer/entities/favorite-establishment";
 
 export class InMemoryFavoritesRepository implements FavoritesRepository {
   public items: FavoriteEstablishment[] = [];

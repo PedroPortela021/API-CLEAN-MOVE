@@ -1,9 +1,9 @@
 import {
   AppointmentFilters,
   AppointmentsRepository,
-} from "../../modules/application/repositories/appointments-repository";
-import { Appointment } from "../../modules/scheduling/domain/entities/appointment";
-import { TimeSlot } from "../../modules/scheduling/domain/value-objects/time-slot";
+} from "../../contexts/booking-operations/application/repositories/appointments-repository";
+import { Appointment } from "../../contexts/booking-operations/domain/scheduling/entities/appointment";
+import { TimeSlot } from "../../contexts/booking-operations/domain/scheduling/value-objects/time-slot";
 
 export class InMemoryAppointmentsRepository implements AppointmentsRepository {
   public items: Appointment[] = [];
