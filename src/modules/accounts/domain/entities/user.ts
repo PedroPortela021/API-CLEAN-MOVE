@@ -3,16 +3,23 @@ import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
 import { Address, AddressProps } from "../value-objects/address";
 import { Email } from "../value-objects/email";
+import type { OAuthProvider } from "../value-objects/oauth-provider";
 import { Phone } from "../value-objects/phone";
 import { UserRole } from "../value-objects/user-role";
+
+export type SocialAccountLink = {
+  provider: OAuthProvider;
+  subjectId: string;
+};
 
 export type UserProps = {
   name: string;
   email: Email;
-  hashedPassword: string;
+  hashedPassword: string | null;
   role: UserRole;
-  phone: Phone;
-  address: Address;
+  phone: Phone | null;
+  address: Address | null;
+  socialAccounts: SocialAccountLink[];
   createdAt: Date | null;
   updatedAt: Date | null;
 };
@@ -37,12 +44,20 @@ export class User extends AggregateRoot<UserProps> {
     return this.props.address;
   }
 
+  get socialAccounts(): SocialAccountLink[] {
+    return [...this.props.socialAccounts];
+  }
+
   get createdAt() {
     return this.props.createdAt;
   }
 
   get updatedAt() {
     return this.props.updatedAt;
+  }
+
+  isProfileComplete(): boolean {
+    return this.props.phone !== null && this.props.address !== null;
   }
 
   touch() {
@@ -66,16 +81,37 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   changePhone(phone: Phone) {
-    if (this.props.phone === phone) return;
+    if (this.props.phone !== null && this.props.phone === phone) return;
 
     this.props.phone = phone;
     this.touch();
   }
 
   changeAddress(address: Address) {
-    if (this.props.address.equals(address)) return;
+    if (this.props.address !== null && this.props.address.equals(address)) {
+      return;
+    }
 
     this.props.address = address;
+    this.touch();
+  }
+
+  completeProfile(input: { phone: Phone; address: Address }) {
+    this.props.phone = input.phone;
+    this.props.address = input.address;
+    this.touch();
+  }
+
+  linkSocialAccount(provider: OAuthProvider, subjectId: string) {
+    const alreadyLinked = this.props.socialAccounts.some(
+      (link) => link.provider === provider && link.subjectId === subjectId,
+    );
+
+    if (alreadyLinked) {
+      return;
+    }
+
+    this.props.socialAccounts.push({ provider, subjectId });
     this.touch();
   }
 
@@ -109,12 +145,13 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   static create(
-    props: Optional<UserProps, "createdAt" | "updatedAt">,
+    props: Optional<UserProps, "createdAt" | "updatedAt" | "socialAccounts">,
     id?: UniqueEntityId,
   ) {
     const user = new User(
       {
         ...props,
+        socialAccounts: props.socialAccounts ?? [],
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),
       },
