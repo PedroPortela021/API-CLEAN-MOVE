@@ -1,10 +1,10 @@
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
-import { makeCustomer } from "../../../../tests/factories/customer-factory";
-import { makeEstablishment } from "../../../../tests/factories/establishment-factory";
-import { InMemoryCustomersRepository } from "../../../../tests/repositories/in-memory-customers-repository";
-import { InMemoryEstablishmentsRepository } from "../../../../tests/repositories/in-memory-establishment-repository";
-import { InMemoryFavoritesRepository } from "../../../../tests/repositories/in-memory-favorites-repository";
+import { makeCustomer } from "../../../../../tests/factories/customer-factory";
+import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
+import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
+import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
+import { InMemoryFavoritesRepository } from "../../../../../tests/repositories/in-memory-favorites-repository";
 import { AddFavoriteEstablishmentUseCase } from "./add-favorite-establishment";
 
 let inMemoryCustomersRepository: InMemoryCustomersRepository;

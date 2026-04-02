@@ -9,7 +9,7 @@ import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-fo
 import { UsersRepository } from "../../repositories/users-repository";
 import { InvalidEmailError } from "../../../accounts/domain/value-objects/email";
 import { InvalidPhoneError } from "../../../accounts/domain/value-objects/phone";
-import { InvalidServiceUpdateInputError } from "../update-service";
+import { InvalidServiceUpdateInputError } from "../service/update-service";
 import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
 
 type UpdateUserUseCaseRequest = {

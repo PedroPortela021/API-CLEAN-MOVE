@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
-import { makeUser } from "../../../../tests/factories/user-factory";
-import { InMemoryUsersRepository } from "../../../../tests/repositories/in-memory-users-repository";
+import { makeUser } from "../../../../../tests/factories/user-factory";
+import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { GetMeUseCase } from "./get-me";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
