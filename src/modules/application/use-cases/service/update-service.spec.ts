@@ -22,7 +22,9 @@ let sut: UpdateServiceUseCase;
 describe("Update a service", () => {
   beforeEach(() => {
     inMemoryServicesRepository = new InMemoryServicesRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      inMemoryServicesRepository,
+    );
 
     sut = new UpdateServiceUseCase(
       inMemoryServicesRepository,

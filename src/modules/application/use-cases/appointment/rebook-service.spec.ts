@@ -8,6 +8,7 @@ import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
+import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
 import { RebookServiceUseCase } from "./rebook-service";
 import { makeAppointment } from "../../../../../tests/factories/appointment-factory";
 
@@ -19,7 +20,9 @@ let sut: RebookServiceUseCase;
 describe("Rebook service", () => {
   beforeEach(() => {
     appointmentsRepository = new InMemoryAppointmentsRepository();
-    establishmentsRepository = new InMemoryEstablishmentsRepository();
+    establishmentsRepository = new InMemoryEstablishmentsRepository(
+      new InMemoryServicesRepository(),
+    );
 
     sut = new RebookServiceUseCase(
       appointmentsRepository,

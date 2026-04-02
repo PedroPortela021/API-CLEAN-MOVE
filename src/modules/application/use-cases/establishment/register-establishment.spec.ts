@@ -3,6 +3,7 @@ import { makeEstablishment } from "../../../../../tests/factories/establishment-
 import { makeUser } from "../../../../../tests/factories/user-factory";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
+import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { Address } from "../../../accounts/domain/value-objects/address";
 import { Email } from "../../../accounts/domain/value-objects/email";
@@ -39,7 +40,9 @@ function makeOperatingHours() {
 describe("Register an establishment", () => {
   beforeEach(() => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      new InMemoryServicesRepository(),
+    );
     fakeHashGenerator = new FakeHashGenerator();
 
     sut = new RegisterEstablishmentUseCase(
