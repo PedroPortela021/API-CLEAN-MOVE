@@ -1,3 +1,4 @@
+import { ServiceCategory } from "../../catalog/domain/value-objects/service-category";
 import { Establishment } from "../../establishments/domain/entities/establishment";
 
 export abstract class EstablishmentsRepository {
@@ -9,4 +10,8 @@ export abstract class EstablishmentsRepository {
     cnpj: string,
     slug: string,
   ): Promise<Establishment | null>;
+  abstract findMany(filters?: {
+    establishmentName?: string;
+    serviceCategory?: ServiceCategory;
+  }): Promise<Establishment[]>;
 }

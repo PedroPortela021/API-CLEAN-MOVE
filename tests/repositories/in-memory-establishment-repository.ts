@@ -1,7 +1,11 @@
 import { EstablishmentsRepository } from "../../src/modules/application/repositories/establishment-repository";
+import { ServiceCategory } from "../../src/modules/catalog/domain/value-objects/service-category";
 import { Establishment } from "../../src/modules/establishments/domain/entities/establishment";
+import { InMemoryServicesRepository } from "./in-memory-services-repository";
 
 export class InMemoryEstablishmentsRepository implements EstablishmentsRepository {
+  constructor(private servicesRepository: InMemoryServicesRepository) {}
+
   public items: Establishment[] = [];
 
   async create(data: Establishment): Promise<void> {
@@ -48,5 +52,36 @@ export class InMemoryEstablishmentsRepository implements EstablishmentsRepositor
     if (!establishment) return null;
 
     return establishment;
+  }
+
+  async findMany(filters?: {
+    establishmentName?: string;
+    serviceCategory?: ServiceCategory;
+  }): Promise<Establishment[]> {
+    if (!filters) {
+      return this.items;
+    }
+
+    let establishments = this.items;
+
+    if (filters.serviceCategory) {
+      const establishmentIdsWithCategory = new Set(
+        (await this.servicesRepository.findMany())
+          .filter((service) => service.category === filters.serviceCategory)
+          .map((service) => service.establishmentId.toString()),
+      );
+
+      establishments = establishments.filter((item) =>
+        establishmentIdsWithCategory.has(item.id.toString()),
+      );
+    }
+
+    if (filters.establishmentName) {
+      establishments = establishments.filter(
+        (item) => item.corporateName === filters.establishmentName,
+      );
+    }
+
+    return establishments;
   }
 }

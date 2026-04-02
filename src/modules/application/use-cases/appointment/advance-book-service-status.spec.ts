@@ -6,6 +6,7 @@ import { makeAppointment } from "../../../../../tests/factories/appointment-fact
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
+import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
 import { AdvanceBookServiceStatusUseCase } from "./advance-book-service-status";
 
 let appointmentsRepository: InMemoryAppointmentsRepository;
@@ -16,7 +17,9 @@ let sut: AdvanceBookServiceStatusUseCase;
 describe("Advance book service status", () => {
   beforeEach(() => {
     appointmentsRepository = new InMemoryAppointmentsRepository();
-    establishmentsRepository = new InMemoryEstablishmentsRepository();
+    establishmentsRepository = new InMemoryEstablishmentsRepository(
+      new InMemoryServicesRepository(),
+    );
 
     sut = new AdvanceBookServiceStatusUseCase(
       appointmentsRepository,

@@ -4,6 +4,7 @@ import { makeEstablishment } from "../../../../../tests/factories/establishment-
 import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryFavoritesRepository } from "../../../../../tests/repositories/in-memory-favorites-repository";
+import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
 import { AddFavoriteEstablishmentUseCase } from "./add-favorite-establishment";
 import { RemoveFavoriteEstablishmentUseCase } from "./remove-favorite-establishment";
 
@@ -16,7 +17,9 @@ let sut: RemoveFavoriteEstablishmentUseCase;
 describe("Remove favorite establishment", () => {
   beforeEach(() => {
     inMemoryCustomersRepository = new InMemoryCustomersRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      new InMemoryServicesRepository(),
+    );
     inMemoryFavoritesRepository = new InMemoryFavoritesRepository();
 
     addFavoriteUseCase = new AddFavoriteEstablishmentUseCase(

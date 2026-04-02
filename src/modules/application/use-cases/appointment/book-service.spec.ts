@@ -24,9 +24,11 @@ let sut: BookServiceUseCase;
 describe("Book service", () => {
   beforeEach(() => {
     appointmentsRepository = new InMemoryAppointmentsRepository();
-    establishmentsRepository = new InMemoryEstablishmentsRepository();
-    customersRepository = new InMemoryCustomersRepository();
     servicesRepository = new InMemoryServicesRepository();
+    establishmentsRepository = new InMemoryEstablishmentsRepository(
+      servicesRepository,
+    );
+    customersRepository = new InMemoryCustomersRepository();
 
     sut = new BookServiceUseCase(
       appointmentsRepository,
