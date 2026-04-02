@@ -12,7 +12,9 @@ let sut: CreateServiceUseCase;
 describe("Create a service", () => {
   beforeEach(() => {
     inMemoryServicesRepository = new InMemoryServicesRepository();
-    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository();
+    inMemoryEstablishmentsRepository = new InMemoryEstablishmentsRepository(
+      inMemoryServicesRepository,
+    );
 
     sut = new CreateServiceUseCase(
       inMemoryServicesRepository,
