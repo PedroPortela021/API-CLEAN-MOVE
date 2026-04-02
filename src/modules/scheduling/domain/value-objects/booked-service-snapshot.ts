@@ -1,9 +1,11 @@
 import { ValueObject } from "../../../../shared/entities/value-object";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { ServiceCategory } from "../../../catalog/domain/value-objects/service-category";
 
 export type BookedServiceSnapshotProps = {
   serviceId: UniqueEntityId;
   serviceName: string;
+  category: ServiceCategory;
   durationInMinutes: number;
   priceInCents: number;
 };
@@ -26,6 +28,10 @@ export class BookedServiceSnapshot extends ValueObject<BookedServiceSnapshotProp
 
   get serviceName() {
     return this.props.serviceName;
+  }
+
+  get category() {
+    return this.props.category;
   }
 
   get durationInMinutes() {
