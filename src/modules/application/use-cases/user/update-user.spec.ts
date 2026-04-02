@@ -57,8 +57,8 @@ describe("Update user", () => {
     expect(result.value.user.id.toString()).toBe(createdUser.id.toString());
     expect(result.value.user.name).toBe("New Name");
     expect(result.value.user.email.toString()).toBe("new-email@example.com");
-    expect(result.value.user.phone.toString()).toBe("21987654321");
-    expect(result.value.user.address.zipCode).toBe("22222-222");
+    expect(result.value.user.phone!.toString()).toBe("21987654321");
+    expect(result.value.user.address!.zipCode).toBe("22222-222");
     expect(inMemoryUsersRepository.items[0]).toBe(result.value.user);
   });
 

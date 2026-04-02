@@ -1,3 +1,4 @@
+import type { OAuthProvider } from "../../src/modules/accounts/domain/value-objects/oauth-provider";
 import { User } from "../../src/modules/accounts/domain/entities/user";
 import { UsersRepository } from "../../src/modules/application/repositories/users-repository";
 
@@ -26,6 +27,19 @@ export class InMemoryUsersRepository implements UsersRepository {
     }
 
     return user;
+  }
+
+  async findByProviderAndSubject(
+    provider: OAuthProvider,
+    subjectId: string,
+  ): Promise<User | null> {
+    const user = this.items.find((item) =>
+      item.socialAccounts.some(
+        (link) => link.provider === provider && link.subjectId === subjectId,
+      ),
+    );
+
+    return user ?? null;
   }
 
   async save(user: User): Promise<void> {
