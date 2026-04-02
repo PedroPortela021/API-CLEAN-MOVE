@@ -21,4 +21,5 @@ export abstract class ServicesRepository {
     establishmentId: string,
   ): Promise<Service | null>;
   abstract save(service: Service): Promise<void>;
+  abstract findMany(): Promise<Service[]>;
 }

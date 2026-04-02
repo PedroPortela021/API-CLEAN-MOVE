@@ -97,4 +97,10 @@ export class InMemoryServicesRepository implements ServicesRepository {
 
     this.items[serviceIndex] = service;
   }
+
+  async findMany(): Promise<Service[]> {
+    const services = this.items;
+
+    return services;
+  }
 }
