@@ -38,7 +38,7 @@ describe("List establishments", () => {
     expect(result.isRight()).toBe(true);
 
     if (result.isLeft()) {
-      throw result.value;
+      throw new Error();
     }
 
     expect(result.value.establishments).toHaveLength(2);
@@ -70,7 +70,7 @@ describe("List establishments", () => {
     expect(result.isRight()).toBe(true);
 
     if (result.isLeft()) {
-      throw result.value;
+      throw new Error();
     }
 
     expect(result.value.establishments).toHaveLength(1);
@@ -121,7 +121,7 @@ describe("List establishments", () => {
     expect(result.isRight()).toBe(true);
 
     if (result.isLeft()) {
-      throw result.value;
+      throw new Error();
     }
 
     expect(result.value.establishments).toHaveLength(1);
@@ -179,7 +179,7 @@ describe("List establishments", () => {
     expect(result.isRight()).toBe(true);
 
     if (result.isLeft()) {
-      throw result.value;
+      throw new Error();
     }
 
     expect(result.value.establishments).toHaveLength(1);
