@@ -44,3 +44,9 @@ O use case recebe identidade **já validada** pela infra (provider, subjectId, e
 ## 6. Fora de escopo
 
 - Emissão de JWT/refresh (infra ou use case futuro).
+
+## 7. Commits nesta feature
+
+- Mensagens no formato `feat: descrição em inglês`, **do primeiro commit de login até o tip da branch**.
+- O primeiro commit da série é o que introduz `OAuthProvider` (referência histórica comum: `db2b5c383d8c92da222f76b49472bc849dcdd6b3`, filho direto do merge `32b9d0b`).
+- Em comandos Git que percorrem commits, use **`db2b5c3^..HEAD`** (ou **`32b9d0b..HEAD`**, equivalente) para **incluir** esse primeiro commit. O intervalo **`db2b5c3..HEAD`** deixa **fora** o commit do `OAuthProvider`.
