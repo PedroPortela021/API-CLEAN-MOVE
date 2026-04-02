@@ -1,6 +1,6 @@
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
-import { makeCustomer } from "../../../../tests/factories/customer-factory";
-import { InMemoryCustomersRepository } from "../../../../tests/repositories/in-memory-customers-repository";
+import { makeCustomer } from "../../../../../tests/factories/customer-factory";
+import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { Cpf } from "../../../accounts/domain/value-objects/cpf";
 import { GetCustomerUseCase } from "./get-customer";
 

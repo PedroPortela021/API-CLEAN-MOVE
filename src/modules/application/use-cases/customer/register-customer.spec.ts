@@ -1,9 +1,9 @@
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
-import { makeCustomer } from "../../../../tests/factories/customer-factory";
-import { makeUser } from "../../../../tests/factories/user-factory";
-import { FakeHashGenerator } from "../../../../tests/repositories/fake-hash-generator";
-import { InMemoryCustomersRepository } from "../../../../tests/repositories/in-memory-customers-repository";
-import { InMemoryUsersRepository } from "../../../../tests/repositories/in-memory-users-repository";
+import { makeCustomer } from "../../../../../tests/factories/customer-factory";
+import { makeUser } from "../../../../../tests/factories/user-factory";
+import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
+import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
+import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { Address } from "../../../accounts/domain/value-objects/address";
 import { Cpf } from "../../../accounts/domain/value-objects/cpf";
 import { Email } from "../../../accounts/domain/value-objects/email";

@@ -3,8 +3,8 @@ import { Email } from "../../../accounts/domain/value-objects/email";
 import { Phone } from "../../../accounts/domain/value-objects/phone";
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
-import { makeUser } from "../../../../tests/factories/user-factory";
-import { InMemoryUsersRepository } from "../../../../tests/repositories/in-memory-users-repository";
+import { makeUser } from "../../../../../tests/factories/user-factory";
+import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { UpdateUserUseCase } from "./update-user";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
