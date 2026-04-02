@@ -58,7 +58,6 @@ export class RegisterCustomerUseCase {
 
     const userInputValues = {
       role: userRole,
-      cpf,
       name,
       email,
       hashedPassword,
