@@ -31,6 +31,7 @@ type BookServiceUseCaseRequest = {
   serviceId: string;
   author: AppointmentAuthor;
   startsAt: Date;
+  reservationExpiresAt?: Date;
 };
 
 type BookServiceUseCaseResponse = Either<
@@ -60,6 +61,7 @@ export class BookServiceUseCase {
     serviceId,
     author,
     startsAt,
+    reservationExpiresAt,
   }: BookServiceUseCaseRequest): Promise<BookServiceUseCaseResponse> {
     if (
       !canBookAppointment({
@@ -123,6 +125,21 @@ export class BookServiceUseCase {
       return left(new ResourceNotFoundError({ resource: "customer" }));
     }
 
+    const now = new Date();
+
+    if (reservationExpiresAt) {
+      if (
+        Number.isNaN(reservationExpiresAt.getTime()) ||
+        reservationExpiresAt.getTime() <= now.getTime()
+      ) {
+        return left(
+          new InvalidBookServiceInputError(
+            "reservationExpiresAt must be a valid future date.",
+          ),
+        );
+      }
+    }
+
     const overlapedAppointments =
       await this.appointmentsRepository.findManyByEstablishmentIdAndInterval(
         establishmentId,
@@ -133,8 +150,8 @@ export class BookServiceUseCase {
     let isOverlapedAppointment = false;
 
     if (overlapedAppointments) {
-      isOverlapedAppointment = overlapedAppointments.some(
-        (appointment) => appointment.status !== "CANCELLED",
+      isOverlapedAppointment = overlapedAppointments.some((appointment) =>
+        appointment.blocksTimeSlot(now),
       );
     }
 
@@ -146,7 +163,7 @@ export class BookServiceUseCase {
     const bookedByCustomer = author.authorType === "CUSTOMER";
 
     try {
-      appointment = Appointment.create({
+      const appointmentPayload = {
         customerId: new UniqueEntityId(customerId),
         establishmentId: new UniqueEntityId(establishmentId),
         service: BookedServiceSnapshot.create({
@@ -158,7 +175,14 @@ export class BookServiceUseCase {
         }),
         bookedByCustomer,
         slot,
-      });
+      };
+
+      appointment = reservationExpiresAt
+        ? Appointment.createAwaitingPayment({
+            ...appointmentPayload,
+            reservationExpiresAt,
+          })
+        : Appointment.create(appointmentPayload);
     } catch (error) {
       if (
         error instanceof InvalidBookedServiceSnapshotError ||
