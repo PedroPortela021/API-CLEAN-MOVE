@@ -102,6 +102,11 @@ export class User extends AggregateRoot<UserProps> {
     this.touch();
   }
 
+  changePassword(hashedPassword: string) {
+    this.props.hashedPassword = hashedPassword;
+    this.touch();
+  }
+
   linkSocialAccount(provider: OAuthProvider, subjectId: string) {
     const alreadyLinked = this.props.socialAccounts.some(
       (link) => link.provider === provider && link.subjectId === subjectId,
