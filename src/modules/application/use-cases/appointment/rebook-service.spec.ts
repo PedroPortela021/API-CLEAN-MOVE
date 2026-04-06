@@ -222,6 +222,52 @@ describe("Rebook service", () => {
     expect(appointmentsRepository.items).toHaveLength(2);
   });
 
+  it("should ignore expired appointments awaiting payment when checking conflicts", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const appointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+      },
+      new UniqueEntityId("appointment-1"),
+    );
+    const expiredPendingAppointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+        status: "AWAITING_PAYMENT",
+        reservationExpiresAt: new Date("2000-04-05T10:00:00"),
+        slot: TimeSlot.create({
+          startsAt: new Date("2026-04-06T10:30:00"),
+          endsAt: new Date("2026-04-06T11:30:00"),
+        }),
+      },
+      new UniqueEntityId("appointment-2"),
+    );
+
+    await establishmentsRepository.create(establishment);
+    await appointmentsRepository.create(appointment);
+    await appointmentsRepository.create(expiredPendingAppointment);
+
+    const result = await sut.execute({
+      appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "ESTABLISHMENT",
+        authorId: establishment.id.toString(),
+      },
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.appointment.slot.startsAt).toEqual(
+      new Date("2026-04-06T10:00:00"),
+    );
+    expect(appointmentsRepository.items).toHaveLength(2);
+  });
+
   it("should return invalid input when the appointment status cannot be rescheduled", async () => {
     const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
     const appointment = makeAppointment(
