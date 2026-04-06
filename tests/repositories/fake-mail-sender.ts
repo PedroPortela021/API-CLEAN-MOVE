@@ -1,4 +1,4 @@
-import { MailSender } from "../../src/modules/application/repositories/mail-sender";
+import { MailSender } from "../../src/modules/application/gateways/mail-sender";
 
 export class FakeMailSender implements MailSender {
   public readonly sent: { to: string; code: string }[] = [];
