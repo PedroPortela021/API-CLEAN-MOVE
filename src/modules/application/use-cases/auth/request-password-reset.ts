@@ -3,7 +3,7 @@ import { Email } from "../../../accounts/domain/value-objects/email";
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { HashGenerator } from "../../repositories/hash-generator";
-import { MailSender } from "../../repositories/mail-sender";
+import { MailSender } from "../../gateways/mail-sender";
 import { PasswordResetTokensRepository } from "../../repositories/password-reset-tokens-repository";
 import { ResetCodeGenerator } from "../../repositories/reset-code-generator";
 import { UsersRepository } from "../../repositories/users-repository";
