@@ -1,10 +1,12 @@
 import { InactiveServiceError } from "../../../catalog/domain/errors/inactive-service-error";
 import { EstimatedDuration } from "../../../catalog/domain/value-objects/estimated-duration";
 import { EstablishmentClosedError } from "../../../establishments/domain/errors/establishment-closed-error";
+import { InvalidBookServiceInputError } from "../../../scheduling/domain/errors/invalid-book-service-input-error";
 import { OperatingHours } from "../../../establishments/domain/value-objects/operating-hours";
 import { TimeSlotAlreadyBookedError } from "../../../scheduling/domain/errors/time-slot-already-booked-error";
 import { NotAllowedError } from "../../../../shared/errors/not-allowed-error";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { makeAppointment } from "../../../../../tests/factories/appointment-factory";
 import { makeCustomer } from "../../../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
 import { makeService } from "../../../../../tests/factories/service-factory";
@@ -206,6 +208,43 @@ describe("Book service", () => {
     expect(result.value.appointment.bookedByCustomer).toBe(true);
   });
 
+  it("should create an appointment awaiting payment when reservationExpiresAt is provided", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+    });
+    const reservationExpiresAt = new Date("2099-04-06T10:15:00");
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      reservationExpiresAt,
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.appointment.status).toBe("AWAITING_PAYMENT");
+    expect(result.value.appointment.reservationExpiresAt).toEqual(
+      reservationExpiresAt,
+    );
+    expect(result.value.appointment.confirmedAt).toBeNull();
+  });
+
   it("should book a service when the establishment is the author", async () => {
     const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
     const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
@@ -235,6 +274,34 @@ describe("Book service", () => {
     }
 
     expect(result.value.appointment.bookedByCustomer).toBe(false);
+  });
+
+  it("should return invalid input when reservationExpiresAt is not in the future", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+    });
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      reservationExpiresAt: new Date("2000-04-06T10:15:00"),
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(InvalidBookServiceInputError);
+    expect(appointmentsRepository.items).toHaveLength(0);
   });
 
   it("should return a conflict error when the time slot is already booked", async () => {
@@ -333,5 +400,45 @@ describe("Book service", () => {
       appointmentsRepository.items[1],
     );
     expect(secondBooking.value.appointment.bookedByCustomer).toBe(false);
+  });
+
+  it("should ignore expired appointments awaiting payment when checking for time conflicts", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+    });
+    const expiredPendingAppointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+        status: "AWAITING_PAYMENT",
+        reservationExpiresAt: new Date("2000-04-06T10:15:00"),
+      },
+      new UniqueEntityId("appointment-1"),
+    );
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+    await appointmentsRepository.create(expiredPendingAppointment);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      startsAt: new Date("2026-04-06T10:30:00"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(appointmentsRepository.items).toHaveLength(2);
   });
 });

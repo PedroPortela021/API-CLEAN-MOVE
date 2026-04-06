@@ -122,6 +122,40 @@ describe("Cancel book service", () => {
     expect(result.value.appointment.status).toBe("CANCELLED");
   });
 
+  it("should cancel an appointment awaiting payment and clear the reservation deadline", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const appointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+        customerId: new UniqueEntityId("customer-1"),
+        status: "AWAITING_PAYMENT",
+        reservationExpiresAt: new Date("2099-04-06T10:15:00"),
+      },
+      new UniqueEntityId("appointment-1"),
+    );
+
+    await establishmentsRepository.create(establishment);
+    await appointmentsRepository.create(appointment);
+
+    const result = await sut.execute({
+      appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.appointment.status).toBe("CANCELLED");
+    expect(result.value.appointment.reservationExpiresAt).toBeNull();
+    expect(result.value.appointment.cancelledAt).toBeInstanceOf(Date);
+  });
+
   it("should return not allowed when the author does not own the appointment or establishment", async () => {
     const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
     const appointment = makeAppointment(
