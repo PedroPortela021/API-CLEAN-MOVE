@@ -14,12 +14,14 @@ import { InMemoryAppointmentsRepository } from "../../../../../tests/repositorie
 import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
+import { AppointmentBookingService } from "../../services/appointment-booking-service";
 import { BookServiceUseCase } from "./book-service";
 
 let appointmentsRepository: InMemoryAppointmentsRepository;
 let establishmentsRepository: InMemoryEstablishmentsRepository;
 let customersRepository: InMemoryCustomersRepository;
 let servicesRepository: InMemoryServicesRepository;
+let appointmentBookingService: AppointmentBookingService;
 
 let sut: BookServiceUseCase;
 
@@ -31,13 +33,14 @@ describe("Book service", () => {
       servicesRepository,
     );
     customersRepository = new InMemoryCustomersRepository();
-
-    sut = new BookServiceUseCase(
+    appointmentBookingService = new AppointmentBookingService(
       appointmentsRepository,
       establishmentsRepository,
       customersRepository,
       servicesRepository,
     );
+
+    sut = new BookServiceUseCase(appointmentBookingService);
   });
 
   it("should return not allowed when the author cannot book for the customer", async () => {
