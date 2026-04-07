@@ -11,14 +11,14 @@ describe("BookedServiceSnapshot", () => {
     const snapshot = BookedServiceSnapshot.create({
       serviceId,
       serviceName: "Lavagem premium",
-      category: "WASH",
+      category: "PROTECTION",
       durationInMinutes: 90,
       priceInCents: 15000,
     });
 
     expect(snapshot.serviceId.equals(serviceId)).toBe(true);
     expect(snapshot.serviceName).toBe("Lavagem premium");
-    expect(snapshot.category).toBe("WASH");
+    expect(snapshot.category).toBe("PROTECTION");
     expect(snapshot.durationInMinutes).toBe(90);
     expect(snapshot.priceInCents).toBe(15000);
     expect(snapshot.price).toBe(150);
