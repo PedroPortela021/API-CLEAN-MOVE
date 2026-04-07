@@ -150,7 +150,6 @@ export class BookServiceUseCase {
         customerId: new UniqueEntityId(customerId),
         establishmentId: new UniqueEntityId(establishmentId),
         service: BookedServiceSnapshot.create({
-          category: service.category,
           durationInMinutes: service.estimatedDuration.maxInMinutes,
           priceInCents: service.price.amountInCents,
           serviceId: service.id,
