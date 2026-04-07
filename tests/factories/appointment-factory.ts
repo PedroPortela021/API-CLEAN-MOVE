@@ -18,6 +18,7 @@ export function makeAppointment(
       service: BookedServiceSnapshot.create({
         serviceId: new UniqueEntityId(),
         serviceName: "Lavagem simples",
+        category: "WASH",
         durationInMinutes: 60,
         priceInCents: 30000,
       }),
