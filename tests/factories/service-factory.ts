@@ -5,8 +5,8 @@ import {
 import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
 import { EstimatedDuration } from "../../src/modules/catalog/domain/value-objects/estimated-duration";
 import { Money } from "../../src/modules/catalog/domain/value-objects/money";
-import { faker } from "@faker-js/faker";
 import { ServiceName } from "../../src/modules/catalog/domain/value-objects/service-name";
+import { makeProductDescription, makeProductName } from "./random-data";
 
 export function makeService(
   override?: Partial<ServiceProps>,
@@ -15,8 +15,8 @@ export function makeService(
   const service = Service.create(
     {
       establishmentId: new UniqueEntityId(),
-      serviceName: ServiceName.create(faker.commerce.productName()),
-      description: faker.commerce.productDescription(),
+      serviceName: ServiceName.create(makeProductName()),
+      description: makeProductDescription(),
       category: "WASH",
       estimatedDuration: EstimatedDuration.create({
         minInMinutes: 30,

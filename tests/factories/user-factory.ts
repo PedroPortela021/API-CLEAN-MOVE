@@ -7,7 +7,18 @@ import { Email } from "../../src/modules/accounts/domain/value-objects/email";
 import { Phone } from "../../src/modules/accounts/domain/value-objects/phone";
 import { UserRole } from "../../src/modules/accounts/domain/value-objects/user-role";
 import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
-import { faker } from "@faker-js/faker";
+import {
+  makeCity,
+  makeCountry,
+  makeEmail,
+  makeFullName,
+  makePassword,
+  makeState,
+  makeStreet,
+  makeZipCode,
+  randomBoolean,
+  randomIntInclusive,
+} from "./random-data";
 
 export function makeUser(
   role: UserRole,
@@ -15,33 +26,33 @@ export function makeUser(
   id?: UniqueEntityId,
 ) {
   function makeValidBrazilPhone() {
-    const ddd = `${faker.number.int({ min: 1, max: 9 })}${faker.number.int({ min: 1, max: 9 })}`;
-    const isMobile = faker.datatype.boolean();
+    const ddd = `${randomIntInclusive(1, 9)}${randomIntInclusive(1, 9)}`;
+    const isMobile = randomBoolean();
 
     if (isMobile) {
-      const rest = faker.number.int({ min: 0, max: 99999999 });
+      const rest = randomIntInclusive(0, 99999999);
       const subscriber = `9${rest.toString().padStart(8, "0")}`;
       return `${ddd}${subscriber}`;
     }
 
-    const subscriberStart = faker.number.int({ min: 2, max: 9 });
-    const rest = faker.number.int({ min: 0, max: 9999999 });
+    const subscriberStart = randomIntInclusive(2, 9);
+    const rest = randomIntInclusive(0, 9999999);
     const subscriber = `${subscriberStart}${rest.toString().padStart(7, "0")}`;
     return `${ddd}${subscriber}`;
   }
 
   const user = User.create(
     {
-      name: faker.person.fullName(),
+      name: makeFullName(),
       address: Address.create({
-        city: faker.location.city(),
-        country: faker.location.country(),
-        state: faker.location.state(),
-        street: faker.location.street(),
-        zipCode: faker.location.zipCode({ format: "#####-###" }),
+        city: makeCity(),
+        country: makeCountry(),
+        state: makeState(),
+        street: makeStreet(),
+        zipCode: makeZipCode(),
       }),
-      email: new Email(faker.internet.email()),
-      hashedPassword: faker.internet.password(),
+      email: new Email(makeEmail()),
+      hashedPassword: makePassword(),
       phone: Phone.create(makeValidBrazilPhone()),
       role,
       ...override,
