@@ -18,10 +18,31 @@ export class InMemoryPaymentsRepository implements PaymentsRepository {
     return payment;
   }
 
+  async findByProviderNameAndPaymentId(
+    providerName: string,
+    providerPaymentId: string,
+  ): Promise<Payment | null> {
+    const payment = this.items.find(
+      (item) =>
+        item.providerName === providerName &&
+        item.providerPaymentId === providerPaymentId,
+    );
+
+    if (!payment) {
+      return null;
+    }
+
+    return payment;
+  }
+
   async findManyByAppointmentId(appointmentId: string): Promise<Payment[]> {
     return this.items.filter(
       (item) => item.appointmentId.toString() === appointmentId,
     );
+  }
+
+  async findManyPending(): Promise<Payment[]> {
+    return this.items.filter((item) => item.status === "PENDING");
   }
 
   async save(payment: Payment): Promise<void> {
