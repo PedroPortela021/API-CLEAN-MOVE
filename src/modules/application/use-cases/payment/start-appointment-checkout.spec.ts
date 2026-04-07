@@ -2,50 +2,101 @@ import { NotAllowedError } from "../../../../shared/errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { CheckoutCompensationFailedError } from "../../../payment/errors/checkout-compensation-failed-error";
 import { makeCustomer } from "../../../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
 import { makeService } from "../../../../../tests/factories/service-factory";
+import { CheckoutCompensationService } from "../../services/checkout-compensation-service";
 import { FakePaymentGateway } from "../../../../../tests/repositories/fake-payment-gateway";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
+import { InMemoryCheckoutRecoveriesRepository } from "../../../../../tests/repositories/in-memory-checkout-recoveries-repository";
 import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryPaymentsRepository } from "../../../../../tests/repositories/in-memory-payments-repository";
 import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
+import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
 import { AppointmentBookingService } from "../../services/appointment-booking-service";
 import { StartAppointmentCheckoutUseCase } from "./start-appointment-checkout";
 
-let appointmentsRepository: InMemoryAppointmentsRepository;
+class FailingAppointmentsRepository extends InMemoryAppointmentsRepository {
+  public shouldFailOnSave = false;
+
+  async save(
+    appointment: Parameters<InMemoryAppointmentsRepository["save"]>[0],
+  ) {
+    if (this.shouldFailOnSave) {
+      throw new Error("Appointments repository save failed.");
+    }
+
+    return super.save(appointment);
+  }
+}
+
+class FailingPaymentsRepository extends InMemoryPaymentsRepository {
+  public shouldFailOnCreate = false;
+  public shouldFailOnSave = false;
+
+  async create(payment: Parameters<InMemoryPaymentsRepository["create"]>[0]) {
+    if (this.shouldFailOnCreate) {
+      throw new Error("Payments repository create failed.");
+    }
+
+    return super.create(payment);
+  }
+
+  async save(payment: Parameters<InMemoryPaymentsRepository["save"]>[0]) {
+    if (this.shouldFailOnSave) {
+      throw new Error("Payments repository save failed.");
+    }
+
+    return super.save(payment);
+  }
+}
+
+let appointmentsRepository: FailingAppointmentsRepository;
 let customersRepository: InMemoryCustomersRepository;
 let establishmentsRepository: InMemoryEstablishmentsRepository;
 let servicesRepository: InMemoryServicesRepository;
-let paymentsRepository: InMemoryPaymentsRepository;
+let paymentsRepository: FailingPaymentsRepository;
+let checkoutRecoveriesRepository: InMemoryCheckoutRecoveriesRepository;
 let paymentGateway: FakePaymentGateway;
 let appointmentBookingService: AppointmentBookingService;
+let checkoutCompensationService: CheckoutCompensationService;
+let unitOfWork: InMemoryUnitOfWork;
 
 let sut: StartAppointmentCheckoutUseCase;
 
 describe("Start appointment checkout", () => {
   beforeEach(() => {
-    appointmentsRepository = new InMemoryAppointmentsRepository();
+    appointmentsRepository = new FailingAppointmentsRepository();
     customersRepository = new InMemoryCustomersRepository();
     servicesRepository = new InMemoryServicesRepository();
     establishmentsRepository = new InMemoryEstablishmentsRepository(
       servicesRepository,
     );
-    paymentsRepository = new InMemoryPaymentsRepository();
+    paymentsRepository = new FailingPaymentsRepository();
+    checkoutRecoveriesRepository = new InMemoryCheckoutRecoveriesRepository();
     paymentGateway = new FakePaymentGateway();
+    unitOfWork = new InMemoryUnitOfWork();
     appointmentBookingService = new AppointmentBookingService(
       appointmentsRepository,
       establishmentsRepository,
       customersRepository,
       servicesRepository,
     );
+    checkoutCompensationService = new CheckoutCompensationService(
+      appointmentsRepository,
+      paymentsRepository,
+      checkoutRecoveriesRepository,
+      unitOfWork,
+    );
 
     sut = new StartAppointmentCheckoutUseCase(
       appointmentBookingService,
-      appointmentsRepository,
       paymentsRepository,
       paymentGateway,
+      checkoutCompensationService,
+      unitOfWork,
     );
   });
 
@@ -111,6 +162,7 @@ describe("Start appointment checkout", () => {
     expect(result.value).toBeInstanceOf(NotAllowedError);
     expect(appointmentsRepository.items).toHaveLength(0);
     expect(paymentsRepository.items).toHaveLength(0);
+    expect(checkoutRecoveriesRepository.items).toHaveLength(0);
     expect(paymentGateway.createPixPaymentCalls).toHaveLength(0);
   });
 
@@ -137,6 +189,7 @@ describe("Start appointment checkout", () => {
     expect(result.isLeft()).toBe(true);
     expect(result.value).toBeInstanceOf(ResourceNotFoundError);
     expect(paymentsRepository.items).toHaveLength(0);
+    expect(checkoutRecoveriesRepository.items).toHaveLength(0);
   });
 
   it("should rollback the appointment and payment when the Pix gateway fails", async () => {
@@ -168,6 +221,47 @@ describe("Start appointment checkout", () => {
     expect(appointmentsRepository.items).toHaveLength(1);
     expect(appointmentsRepository.items[0]?.status).toBe("CANCELLED");
     expect(paymentsRepository.items).toHaveLength(1);
+    expect(paymentsRepository.items[0]?.status).toBe("CANCELLED");
+    expect(checkoutRecoveriesRepository.items).toHaveLength(0);
+  });
+
+  it("should persist a checkout recovery when the compensation fails", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+    });
+
+    paymentGateway.shouldFail = true;
+    appointmentsRepository.shouldFailOnSave = true;
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isLeft()).toBe(true);
+    expect(result.value).toBeInstanceOf(CheckoutCompensationFailedError);
+    expect(checkoutRecoveriesRepository.items).toHaveLength(1);
+    expect(
+      checkoutRecoveriesRepository.items[0]?.appointmentCompensationPending,
+    ).toBe(true);
+    expect(
+      checkoutRecoveriesRepository.items[0]?.paymentCompensationPending,
+    ).toBe(false);
+    expect(checkoutRecoveriesRepository.items[0]?.reason).toBe(
+      "PAYMENT_GATEWAY_FAILED",
+    );
     expect(paymentsRepository.items[0]?.status).toBe("CANCELLED");
   });
 });
