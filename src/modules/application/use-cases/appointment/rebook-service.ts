@@ -100,12 +100,13 @@ export class RebookServiceUseCase {
       );
 
     let isOverlapedAppointment = false;
+    const now = new Date();
 
     if (overlapedAppointments) {
       isOverlapedAppointment = overlapedAppointments.some(
-        (appointment) =>
-          appointment.status !== "CANCELLED" &&
-          appointment.id.toString() !== appointmentId,
+        (overlappedAppointment) =>
+          overlappedAppointment.id.toString() !== appointmentId &&
+          overlappedAppointment.blocksTimeSlot(now),
       );
     }
 
