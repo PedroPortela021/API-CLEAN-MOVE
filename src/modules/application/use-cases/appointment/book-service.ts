@@ -154,6 +154,7 @@ export class BookServiceUseCase {
           priceInCents: service.price.amountInCents,
           serviceId: service.id,
           serviceName: service.serviceName.value,
+          category: service.category,
         }),
         bookedByCustomer,
         slot,

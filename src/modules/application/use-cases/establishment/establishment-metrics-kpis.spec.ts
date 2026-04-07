@@ -51,6 +51,7 @@ describe("Establishment metrics KPIs", () => {
         service: BookedServiceSnapshot.create({
           serviceId: washService.id,
           serviceName: washService.serviceName.value,
+          category: washService.category,
           durationInMinutes: 60,
           priceInCents: 10000,
         }),
@@ -68,6 +69,7 @@ describe("Establishment metrics KPIs", () => {
         service: BookedServiceSnapshot.create({
           serviceId: washService.id,
           serviceName: washService.serviceName.value,
+          category: washService.category,
           durationInMinutes: 60,
           priceInCents: 15000,
         }),
@@ -85,6 +87,7 @@ describe("Establishment metrics KPIs", () => {
         service: BookedServiceSnapshot.create({
           serviceId: protectionService.id,
           serviceName: protectionService.serviceName.value,
+          category: protectionService.category,
           durationInMinutes: 60,
           priceInCents: 25000,
         }),

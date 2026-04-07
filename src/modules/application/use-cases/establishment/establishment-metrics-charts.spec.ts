@@ -48,6 +48,7 @@ describe("Establishment metrics charts", () => {
         service: BookedServiceSnapshot.create({
           serviceId: washService.id,
           serviceName: washService.serviceName.value,
+          category: washService.category,
           durationInMinutes: 60,
           priceInCents: 10000,
         }),
@@ -65,6 +66,7 @@ describe("Establishment metrics charts", () => {
         service: BookedServiceSnapshot.create({
           serviceId: washService.id,
           serviceName: washService.serviceName.value,
+          category: washService.category,
           durationInMinutes: 60,
           priceInCents: 12000,
         }),
@@ -82,6 +84,7 @@ describe("Establishment metrics charts", () => {
         service: BookedServiceSnapshot.create({
           serviceId: detailsService.id,
           serviceName: detailsService.serviceName.value,
+          category: detailsService.category,
           durationInMinutes: 60,
           priceInCents: 30000,
         }),
