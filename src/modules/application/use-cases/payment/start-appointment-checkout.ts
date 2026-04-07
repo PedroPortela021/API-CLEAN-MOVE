@@ -4,19 +4,22 @@ import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-doma
 import { NotAllowedError } from "../../../../shared/errors/not-allowed-error";
 import { InactiveServiceError } from "../../../catalog/domain/errors/inactive-service-error";
 import { EstablishmentClosedError } from "../../../establishments/domain/errors/establishment-closed-error";
+import { CheckoutCompensationFailedError } from "../../../payment/errors/checkout-compensation-failed-error";
 import {
   InvalidPaymentError,
   Payment,
 } from "../../../payment/entities/payment";
+import { CheckoutRecoveryReason } from "../../../payment/entities/checkout-recovery";
 import { InvalidPaymentStatusTransitionError } from "../../../payment/errors/invalid-payment-status-transition-error";
 import { Appointment } from "../../../scheduling/domain/entities/appointment";
 import { InvalidBookServiceInputError } from "../../../scheduling/domain/errors/invalid-book-service-input-error";
 import { TimeSlotAlreadyBookedError } from "../../../scheduling/domain/errors/time-slot-already-booked-error";
 import { AppointmentAuthor } from "../../../scheduling/domain/policies/appointment-authorization";
 import { PaymentGateway } from "../../gateways/payment";
-import { AppointmentsRepository } from "../../repositories/appointments-repository";
 import { PaymentsRepository } from "../../repositories/payments-repository";
+import { UnitOfWork } from "../../repositories/unit-of-work";
 import { AppointmentBookingService } from "../../services/appointment-booking-service";
+import { CheckoutCompensationService } from "../../services/checkout-compensation-service";
 
 const DEFAULT_PIX_EXPIRATION_MS = 15 * 60 * 1000;
 
@@ -35,6 +38,7 @@ type StartAppointmentCheckoutUseCaseResponse = Either<
   | EstablishmentClosedError
   | TimeSlotAlreadyBookedError
   | InvalidBookServiceInputError
+  | CheckoutCompensationFailedError
   | UnexpectedDomainError,
   {
     appointment: Appointment;
@@ -45,9 +49,10 @@ type StartAppointmentCheckoutUseCaseResponse = Either<
 export class StartAppointmentCheckoutUseCase {
   constructor(
     private appointmentBookingService: AppointmentBookingService,
-    private appointmentsRepository: AppointmentsRepository,
     private paymentsRepository: PaymentsRepository,
     private paymentGateway: PaymentGateway,
+    private checkoutCompensationService: CheckoutCompensationService,
+    private unitOfWork: UnitOfWork,
     private pixExpirationMs: number = DEFAULT_PIX_EXPIRATION_MS,
   ) {}
 
@@ -76,26 +81,33 @@ export class StartAppointmentCheckoutUseCase {
 
     const { appointment } = bookingResult.value;
 
-    let payment: Payment;
+    let payment: Payment | null = null;
 
     try {
-      payment = Payment.create({
+      const createdPayment = Payment.create({
         appointmentId: appointment.id,
         customerId: appointment.customerId,
         establishmentId: appointment.establishmentId,
         amountInCents: appointment.service.priceInCents,
       });
+      payment = createdPayment;
+
+      await this.unitOfWork.execute(async () => {
+        await this.paymentsRepository.create(createdPayment);
+      });
     } catch (error) {
-      await this.rollbackAppointmentCheckout(appointment);
-
-      if (error instanceof InvalidPaymentError) {
-        return left(new UnexpectedDomainError());
-      }
-
-      return left(new UnexpectedDomainError());
+      return this.handleCheckoutFailure({
+        appointment,
+        payment: error instanceof InvalidPaymentError ? null : payment,
+        reason: "PAYMENT_CREATION_FAILED",
+        cause: error,
+        referenceDate: now,
+      });
     }
 
-    await this.paymentsRepository.create(payment);
+    if (!payment) {
+      return left(new UnexpectedDomainError());
+    }
 
     try {
       const pixPayment = await this.paymentGateway.createPixPayment({
@@ -106,33 +118,28 @@ export class StartAppointmentCheckoutUseCase {
         expiresAt: reservationExpiresAt,
       });
 
-      payment.issuePixCharge(
-        {
-          providerName: pixPayment.providerName,
-          providerPaymentId: pixPayment.providerPaymentId,
-          pixQrCode: pixPayment.pixQrCode,
-          pixCopyPasteCode: pixPayment.pixCopyPasteCode,
-          pixExpiresAt: pixPayment.pixExpiresAt,
-        },
-        now,
-      );
+      await this.unitOfWork.execute(async () => {
+        payment.issuePixCharge(
+          {
+            providerName: pixPayment.providerName,
+            providerPaymentId: pixPayment.providerPaymentId,
+            pixQrCode: pixPayment.pixQrCode,
+            pixCopyPasteCode: pixPayment.pixCopyPasteCode,
+            pixExpiresAt: pixPayment.pixExpiresAt,
+          },
+          now,
+        );
 
-      await this.paymentsRepository.save(payment);
-    } catch (error) {
-      await this.rollbackCheckoutFailure({
-        appointment,
-        payment,
-        now,
+        await this.paymentsRepository.save(payment);
       });
-
-      if (
-        error instanceof InvalidPaymentError ||
-        error instanceof InvalidPaymentStatusTransitionError
-      ) {
-        return left(new UnexpectedDomainError());
-      }
-
-      return left(new UnexpectedDomainError());
+    } catch (error) {
+      return this.handleCheckoutFailure({
+        appointment,
+        payment: payment ?? null,
+        reason: "PAYMENT_GATEWAY_FAILED",
+        cause: error,
+        referenceDate: now,
+      });
     }
 
     return right({
@@ -141,31 +148,44 @@ export class StartAppointmentCheckoutUseCase {
     });
   }
 
-  private async rollbackCheckoutFailure({
+  private async handleCheckoutFailure({
     appointment,
     payment,
-    now,
+    reason,
+    cause,
+    referenceDate,
   }: {
     appointment: Appointment;
-    payment: Payment;
-    now: Date;
-  }) {
-    await this.rollbackAppointmentCheckout(appointment);
-
+    payment: Payment | null;
+    reason: CheckoutRecoveryReason;
+    cause: unknown;
+    referenceDate: Date;
+  }): Promise<StartAppointmentCheckoutUseCaseResponse> {
     try {
-      payment.cancel(now);
-      await this.paymentsRepository.save(payment);
-    } catch {
-      // Best effort rollback to avoid leaving the slot blocked on checkout failures.
-    }
-  }
+      const { recovery } = await this.checkoutCompensationService.execute({
+        appointment,
+        payment,
+        reason,
+        cause,
+        referenceDate,
+      });
 
-  private async rollbackAppointmentCheckout(appointment: Appointment) {
-    try {
-      appointment.cancel();
-      await this.appointmentsRepository.save(appointment);
+      if (recovery) {
+        return left(
+          new CheckoutCompensationFailedError(recovery.id.toString()),
+        );
+      }
     } catch {
-      // Best effort rollback to avoid leaving the slot blocked on checkout failures.
+      return left(new UnexpectedDomainError());
     }
+
+    if (
+      cause instanceof InvalidPaymentError ||
+      cause instanceof InvalidPaymentStatusTransitionError
+    ) {
+      return left(new UnexpectedDomainError());
+    }
+
+    return left(new UnexpectedDomainError());
   }
 }
