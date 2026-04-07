@@ -1,4 +1,3 @@
-import { faker } from "@faker-js/faker";
 import {
   Establishment,
   EstablishmentProps,
@@ -6,6 +5,7 @@ import {
 import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
 import { Cnpj } from "../../src/modules/establishments/domain/value-objects/cnpj";
 import { OperatingHours } from "../../src/modules/establishments/domain/value-objects/operating-hours";
+import { makeCompanyName, makeUsername } from "./random-data";
 
 export function makeEstablishment(
   override?: Partial<EstablishmentProps>,
@@ -15,8 +15,8 @@ export function makeEstablishment(
     {
       ownerId: new UniqueEntityId(),
       cnpj: Cnpj.create("81936265000106"),
-      socialReason: faker.company.name(),
-      corporateName: faker.internet.username(),
+      socialReason: makeCompanyName(),
+      corporateName: makeUsername(),
       operatingHours: OperatingHours.create({
         days: [
           {
