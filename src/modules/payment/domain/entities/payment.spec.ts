@@ -1,4 +1,4 @@
-import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
+import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { InvalidPaymentError, Payment } from "./payment";
 import { InvalidPaymentStatusTransitionError } from "../errors/invalid-payment-status-transition-error";
 

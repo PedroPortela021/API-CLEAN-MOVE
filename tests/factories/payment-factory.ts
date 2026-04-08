@@ -1,7 +1,7 @@
 import {
   Payment,
   PaymentProps,
-} from "../../src/modules/payment/entities/payment";
+} from "../../src/modules/payment/domain/entities/payment";
 import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
 
 export function makePayment(

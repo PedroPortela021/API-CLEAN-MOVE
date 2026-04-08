@@ -1,5 +1,5 @@
 import { CheckoutRecoveriesRepository } from "../../src/modules/application/repositories/checkout-recoveries-repository";
-import { CheckoutRecovery } from "../../src/modules/payment/entities/checkout-recovery";
+import { CheckoutRecovery } from "../../src/modules/payment/domain/entities/checkout-recovery";
 
 export class InMemoryCheckoutRecoveriesRepository implements CheckoutRecoveriesRepository {
   public items: CheckoutRecovery[] = [];

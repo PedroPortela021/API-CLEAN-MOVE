@@ -4,13 +4,13 @@ import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-doma
 import { NotAllowedError } from "../../../../shared/errors/not-allowed-error";
 import { InactiveServiceError } from "../../../catalog/domain/errors/inactive-service-error";
 import { EstablishmentClosedError } from "../../../establishments/domain/errors/establishment-closed-error";
-import { CheckoutCompensationFailedError } from "../../../payment/errors/checkout-compensation-failed-error";
+import { CheckoutCompensationFailedError } from "../../../payment/domain/errors/checkout-compensation-failed-error";
 import {
   InvalidPaymentError,
   Payment,
-} from "../../../payment/entities/payment";
-import { CheckoutRecoveryReason } from "../../../payment/entities/checkout-recovery";
-import { InvalidPaymentStatusTransitionError } from "../../../payment/errors/invalid-payment-status-transition-error";
+} from "../../../payment/domain/entities/payment";
+import { CheckoutRecoveryReason } from "../../../payment/domain/entities/checkout-recovery";
+import { InvalidPaymentStatusTransitionError } from "../../../payment/domain/errors/invalid-payment-status-transition-error";
 import { Appointment } from "../../../scheduling/domain/entities/appointment";
 import { InvalidBookServiceInputError } from "../../../scheduling/domain/errors/invalid-book-service-input-error";
 import { TimeSlotAlreadyBookedError } from "../../../scheduling/domain/errors/time-slot-already-booked-error";

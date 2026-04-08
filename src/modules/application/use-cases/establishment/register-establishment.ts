@@ -87,6 +87,7 @@ export class RegisterEstablishmentUseCase {
       corporateName,
       socialReason,
       operatingHours,
+      slug,
     });
 
     await Promise.all([

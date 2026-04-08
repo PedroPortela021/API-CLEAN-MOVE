@@ -1,4 +1,4 @@
-import { Payment } from "../../payment/entities/payment";
+import { Payment } from "../../payment/domain/entities/payment";
 
 export abstract class PaymentsRepository {
   abstract create(payment: Payment): Promise<void>;

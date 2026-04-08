@@ -10,6 +10,7 @@ import { Email } from "../../../accounts/domain/value-objects/email";
 import { Phone } from "../../../accounts/domain/value-objects/phone";
 import { Cnpj } from "../../../establishments/domain/value-objects/cnpj";
 import { OperatingHours } from "../../../establishments/domain/value-objects/operating-hours";
+import { Slug } from "../../../establishments/domain/value-objects/slug";
 import { RegisterEstablishmentUseCase } from "./register-establishment";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
@@ -122,6 +123,37 @@ describe("Register an establishment", () => {
     expect(inMemoryUsersRepository.items).toHaveLength(1);
     expect(inMemoryUsersRepository.items[0]).toBe(createdUser);
     expect(inMemoryEstablishmentsRepository.items).toHaveLength(0);
+  });
+
+  it("should persist the custom slug passed to the use case", async () => {
+    const result = await sut.execute({
+      name: "Jon Doe",
+      address: Address.create({
+        city: "city-1",
+        country: "country-1",
+        state: "state-1",
+        street: "street-1",
+        zipCode: "11111-111",
+      }),
+      cnpj: Cnpj.create("41.437.902/0001-77"),
+      corporateName: "Valid Establishment",
+      socialReason: "SOCIAL REASON TEST LTDA",
+      email: new Email("custom-slug@example.com"),
+      operatingHours: makeOperatingHours(),
+      password: "jondoe@123",
+      phone: Phone.create("11987654321"),
+      slug: Slug.create("custom-establishment-slug"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.establishment.slug.value).toBe(
+      "custom-establishment-slug",
+    );
   });
 
   it("not should be able to register an establishment with duplicated cnpj", async () => {

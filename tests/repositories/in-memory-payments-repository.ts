@@ -1,5 +1,5 @@
 import { PaymentsRepository } from "../../src/modules/application/repositories/payments-repository";
-import { Payment } from "../../src/modules/payment/entities/payment";
+import { Payment } from "../../src/modules/payment/domain/entities/payment";
 
 export class InMemoryPaymentsRepository implements PaymentsRepository {
   public items: Payment[] = [];
