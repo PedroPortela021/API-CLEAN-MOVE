@@ -71,25 +71,26 @@ npm install
 ### 3) Rodar em desenvolvimento
 
 ```bash
-npx ts-node src/modules/infra/main.ts
+npm run dev
 ```
 
 ### 4) Build e execução em produção
 
 ```bash
 npm run build
-node dist/modules/infra/main.js
+node dist/infra/main.js
 ```
-
-> Dica: os scripts `start` e `start:dev` do `package.json` ainda podem ser ajustados para esses caminhos.
 
 ---
 
 ## Scripts úteis
 
-- `npm run start:dev`: script existente no projeto (atualmente precisa de ajuste de caminho).
+- `npm run dev`: sobe o `docker compose`, inicia a API em modo desenvolvimento e para os containers ao encerrar com `Ctrl+C`.
+- `npm run docker:up`: sobe os containers definidos em `compose.yml`.
+- `npm run docker:stop`: para os containers definidos em `compose.yml`.
+- `npm run start:dev`: inicia a API em modo desenvolvimento com `ts-node`.
 - `npm run build`: compila TypeScript para `dist`.
-- `npm run start`: script existente no projeto (atualmente precisa de ajuste de caminho).
+- `npm run start`: inicia a versão compilada em `dist`.
 - `npm run test`: executa suíte de testes.
 - `npm run test:unit`: executa testes de unidade em `src`.
 - `npm run lint`: valida padrões de código.

@@ -7,6 +7,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "dev": "bash ./scripts/dev.sh",
+    "docker:up": "docker compose up -d",
+    "docker:stop": "docker compose stop",
     "lint": "eslint . --cache --cache-location .eslintcache",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier . --write",
