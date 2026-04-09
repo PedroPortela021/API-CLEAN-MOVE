@@ -6,6 +6,7 @@ import { Appointment } from "../../../scheduling/domain/entities/appointment";
 import { InvalidAppointmentStatusTransitionError } from "../../../scheduling/domain/errors/invalid-appointment-status-transition-error";
 import { AppointmentsRepository } from "../../repositories/appointments-repository";
 import { EstablishmentsRepository } from "../../repositories/establishment-repository";
+import { UnitOfWork } from "../../repositories/unit-of-work";
 import {
   AppointmentAuthor,
   isAppointmentAuthor,
@@ -30,6 +31,7 @@ export class CancelBookServiceUseCase {
   constructor(
     private appointmentsRepository: AppointmentsRepository,
     private establishmentsRepository: EstablishmentsRepository,
+    private unitOfWork: UnitOfWork,
   ) {}
 
   async execute({
@@ -56,15 +58,16 @@ export class CancelBookServiceUseCase {
     }
 
     try {
-      appointment.cancel();
+      await this.unitOfWork.execute(async () => {
+        appointment.cancel();
+        await this.appointmentsRepository.save(appointment);
+      });
     } catch (error) {
       if (error instanceof InvalidAppointmentStatusTransitionError) {
         return left(new InvalidAppointmentStatusTransitionError(error.message));
       }
       return left(new UnexpectedDomainError());
     }
-
-    await this.appointmentsRepository.save(appointment);
 
     return right({
       appointment,

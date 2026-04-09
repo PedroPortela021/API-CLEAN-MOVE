@@ -57,10 +57,8 @@ export class ExpirePendingPixPaymentsUseCase {
       try {
         await this.unitOfWork.execute(async () => {
           payment.expire(executionDate);
-          appointment.expirePayment(executionDate);
 
           await this.paymentsRepository.save(payment);
-          await this.appointmentsRepository.save(appointment);
         });
       } catch (error) {
         if (error instanceof InvalidPaymentStatusTransitionError) {

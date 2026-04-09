@@ -5,6 +5,7 @@ import { makePayment } from "../../../../../tests/factories/payment-factory";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
 import { InMemoryPaymentsRepository } from "../../../../../tests/repositories/in-memory-payments-repository";
 import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
+import { registerDomainEventSubscribers } from "../../subscribers/register-domain-event-subscribers";
 import { ProcessPaymentWebhookUseCase } from "./process-payment-webhook";
 
 class SpyUnitOfWork extends InMemoryUnitOfWork {
@@ -27,6 +28,10 @@ describe("Process payment webhook", () => {
     appointmentsRepository = new InMemoryAppointmentsRepository();
     paymentsRepository = new InMemoryPaymentsRepository();
     unitOfWork = new SpyUnitOfWork();
+    registerDomainEventSubscribers({
+      appointmentsRepository,
+      paymentsRepository,
+    });
 
     sut = new ProcessPaymentWebhookUseCase(
       paymentsRepository,
