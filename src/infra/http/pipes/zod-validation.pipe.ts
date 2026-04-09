@@ -24,15 +24,12 @@ export function formatZodValidationIssues(
 }
 
 @Injectable()
-export class ZodValidationPipe<TSchema extends z.ZodTypeAny>
-  implements PipeTransform<unknown, z.output<TSchema>>
-{
+export class ZodValidationPipe<
+  TSchema extends z.ZodTypeAny,
+> implements PipeTransform<unknown, z.output<TSchema>> {
   constructor(private readonly schema: TSchema) {}
 
-  transform(
-    value: unknown,
-    metadata: ArgumentMetadata,
-  ): z.output<TSchema> {
+  transform(value: unknown, metadata: ArgumentMetadata): z.output<TSchema> {
     const result = this.schema.safeParse(value);
 
     if (result.success) {
