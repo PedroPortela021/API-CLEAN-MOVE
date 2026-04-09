@@ -6,3 +6,5 @@ coverage
 .env
 
 *.pdf
+/generated/prisma
+/src/generated/prisma
