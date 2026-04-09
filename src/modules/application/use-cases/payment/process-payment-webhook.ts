@@ -76,29 +76,20 @@ export class ProcessPaymentWebhookUseCase {
 
     try {
       await this.unitOfWork.execute(async () => {
-        let shouldSavePayment = false;
-        let shouldSaveAppointment = false;
-
         if (payment.status !== "PAID") {
           payment.markAsPaid(referenceDate);
-          shouldSavePayment = true;
+          await this.paymentsRepository.save(payment);
+          return;
         }
 
         if (appointment.status === "AWAITING_PAYMENT") {
           appointment.confirmPayment(referenceDate);
-          shouldSaveAppointment = true;
+          await this.appointmentsRepository.save(appointment);
+          return;
         } else if (appointment.status !== "SCHEDULED") {
           throw new InvalidAppointmentStatusTransitionError(
             "Only appointments awaiting payment or already scheduled can confirm payment.",
           );
-        }
-
-        if (shouldSavePayment) {
-          await this.paymentsRepository.save(payment);
-        }
-
-        if (shouldSaveAppointment) {
-          await this.appointmentsRepository.save(appointment);
         }
       });
     } catch (error) {
@@ -113,9 +104,17 @@ export class ProcessPaymentWebhookUseCase {
       return left(new UnexpectedDomainError());
     }
 
+    const updatedAppointment = await this.appointmentsRepository.findById(
+      payment.appointmentId.toString(),
+    );
+
+    if (!updatedAppointment) {
+      return left(new ResourceNotFoundError({ resource: "appointment" }));
+    }
+
     return right({
       payment,
-      appointment,
+      appointment: updatedAppointment,
       alreadyProcessed: false,
     });
   }

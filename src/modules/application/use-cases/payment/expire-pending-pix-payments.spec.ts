@@ -4,6 +4,7 @@ import { makePayment } from "../../../../../tests/factories/payment-factory";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
 import { InMemoryPaymentsRepository } from "../../../../../tests/repositories/in-memory-payments-repository";
 import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
+import { registerDomainEventSubscribers } from "../../subscribers/register-domain-event-subscribers";
 import { ExpirePendingPixPaymentsUseCase } from "./expire-pending-pix-payments";
 
 class SpyUnitOfWork extends InMemoryUnitOfWork {
@@ -26,6 +27,9 @@ describe("Expire pending pix payments", () => {
     appointmentsRepository = new InMemoryAppointmentsRepository();
     paymentsRepository = new InMemoryPaymentsRepository();
     unitOfWork = new SpyUnitOfWork();
+    registerDomainEventSubscribers({
+      appointmentsRepository,
+    });
 
     sut = new ExpirePendingPixPaymentsUseCase(
       paymentsRepository,

@@ -1,6 +1,8 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
+import { PaymentExpiredEvent } from "../events/payment-expired-event";
+import { PaymentPaidEvent } from "../events/payment-paid-event";
 import { InvalidPaymentStatusTransitionError } from "../errors/invalid-payment-status-transition-error";
 
 export type PaymentMethod = "PIX";
@@ -238,6 +240,7 @@ export class Payment extends AggregateRoot<PaymentProps> {
     this.props.expiredAt = null;
     this.props.cancelledAt = null;
     this.touch(referenceDate);
+    this.addDomainEvent(new PaymentPaidEvent(this, referenceDate));
   }
 
   expire(referenceDate: Date = new Date()) {
@@ -256,6 +259,7 @@ export class Payment extends AggregateRoot<PaymentProps> {
     this.props.status = "EXPIRED";
     this.props.expiredAt = referenceDate;
     this.touch(referenceDate);
+    this.addDomainEvent(new PaymentExpiredEvent(this, referenceDate));
   }
 
   cancel(referenceDate: Date = new Date()) {
