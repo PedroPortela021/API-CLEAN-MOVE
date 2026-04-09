@@ -1,4 +1,4 @@
-import { CheckoutRecovery } from "../../payment/entities/checkout-recovery";
+import { CheckoutRecovery } from "../../payment/domain/entities/checkout-recovery";
 
 export abstract class CheckoutRecoveriesRepository {
   abstract create(recovery: CheckoutRecovery): Promise<void>;

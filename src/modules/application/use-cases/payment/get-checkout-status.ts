@@ -1,6 +1,6 @@
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
-import { Payment } from "../../../payment/entities/payment";
+import { Payment } from "../../../payment/domain/entities/payment";
 import { Appointment } from "../../../scheduling/domain/entities/appointment";
 import { AppointmentsRepository } from "../../repositories/appointments-repository";
 import { PaymentsRepository } from "../../repositories/payments-repository";

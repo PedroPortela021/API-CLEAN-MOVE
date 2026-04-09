@@ -1,6 +1,6 @@
-import { AggregateRoot } from "../../../shared/entities/aggregate-root";
-import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
-import { Optional } from "../../../shared/types/optional";
+import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
+import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { Optional } from "../../../../shared/types/optional";
 
 export type CheckoutRecoveryReason =
   | "PAYMENT_CREATION_FAILED"

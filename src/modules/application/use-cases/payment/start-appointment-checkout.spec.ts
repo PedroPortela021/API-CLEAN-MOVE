@@ -2,7 +2,7 @@ import { NotAllowedError } from "../../../../shared/errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
-import { CheckoutCompensationFailedError } from "../../../payment/errors/checkout-compensation-failed-error";
+import { CheckoutCompensationFailedError } from "../../../payment/domain/errors/checkout-compensation-failed-error";
 import { makeCustomer } from "../../../../../tests/factories/customer-factory";
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
 import { makeService } from "../../../../../tests/factories/service-factory";

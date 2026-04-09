@@ -24,6 +24,7 @@ import { AppointmentsRepository } from "../repositories/appointments-repository"
 import { CustomersRepository } from "../repositories/customers-repository";
 import { EstablishmentsRepository } from "../repositories/establishment-repository";
 import { ServicesRepository } from "../repositories/services-repository";
+import { InvalidAppointmentPaymentWindowError } from "../../scheduling/domain/errors/invalid-appointment-payment-window-error";
 
 export type AppointmentBookingServiceRequest = {
   establishmentId: string;
@@ -128,19 +129,6 @@ export class AppointmentBookingService {
 
     const now = new Date();
 
-    if (reservationExpiresAt) {
-      if (
-        Number.isNaN(reservationExpiresAt.getTime()) ||
-        reservationExpiresAt.getTime() <= now.getTime()
-      ) {
-        return left(
-          new InvalidBookServiceInputError(
-            "reservationExpiresAt must be a valid future date.",
-          ),
-        );
-      }
-    }
-
     const overlapedAppointments =
       await this.appointmentsRepository.findManyByEstablishmentIdAndInterval(
         establishmentId,
@@ -187,7 +175,8 @@ export class AppointmentBookingService {
     } catch (error) {
       if (
         error instanceof InvalidBookedServiceSnapshotError ||
-        error instanceof InvalidTimeSlotError
+        error instanceof InvalidTimeSlotError ||
+        error instanceof InvalidAppointmentPaymentWindowError
       ) {
         return left(new InvalidBookServiceInputError(error.message));
       }

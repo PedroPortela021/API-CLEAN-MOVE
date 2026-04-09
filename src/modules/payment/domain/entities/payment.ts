@@ -1,6 +1,6 @@
-import { AggregateRoot } from "../../../shared/entities/aggregate-root";
-import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
-import { Optional } from "../../../shared/types/optional";
+import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
+import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { Optional } from "../../../../shared/types/optional";
 import { InvalidPaymentStatusTransitionError } from "../errors/invalid-payment-status-transition-error";
 
 export type PaymentMethod = "PIX";

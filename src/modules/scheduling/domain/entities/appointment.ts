@@ -1,6 +1,7 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
+import { InvalidAppointmentPaymentWindowError } from "../errors/invalid-appointment-payment-window-error";
 import { InvalidAppointmentStatusTransitionError } from "../errors/invalid-appointment-status-transition-error";
 import { BookedServiceSnapshot } from "../value-objects/booked-service-snapshot";
 import { TimeSlot } from "../value-objects/time-slot";
@@ -106,6 +107,8 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
       id,
     );
 
+    appointment.assertValidState();
+
     return appointment;
   }
 
@@ -124,7 +127,7 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
     },
     id?: UniqueEntityId,
   ) {
-    return Appointment.create(
+    const appointment = Appointment.create(
       {
         ...props,
         status: "AWAITING_PAYMENT",
@@ -133,6 +136,12 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
       },
       id,
     );
+
+    appointment.assertValidState({
+      validateFuturePaymentWindow: true,
+    });
+
+    return appointment;
   }
 
   touch() {
@@ -254,5 +263,43 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
 
     this.props.slot = newSlot;
     this.touch();
+  }
+
+  private assertValidState(options?: {
+    validateFuturePaymentWindow?: boolean;
+  }) {
+    if (this.props.status !== "AWAITING_PAYMENT") {
+      if (this.props.reservationExpiresAt !== null) {
+        throw new InvalidAppointmentPaymentWindowError(
+          "reservationExpiresAt is only allowed for appointments awaiting payment.",
+        );
+      }
+
+      return;
+    }
+
+    if (!(this.props.reservationExpiresAt instanceof Date)) {
+      throw new InvalidAppointmentPaymentWindowError(
+        "reservationExpiresAt must be a valid date.",
+      );
+    }
+
+    if (Number.isNaN(this.props.reservationExpiresAt.getTime())) {
+      throw new InvalidAppointmentPaymentWindowError(
+        "reservationExpiresAt must be a valid date.",
+      );
+    }
+
+    if (!options?.validateFuturePaymentWindow) {
+      return;
+    }
+
+    const referenceDate = this.props.createdAt ?? new Date();
+
+    if (this.props.reservationExpiresAt.getTime() <= referenceDate.getTime()) {
+      throw new InvalidAppointmentPaymentWindowError(
+        "reservationExpiresAt must be a future date.",
+      );
+    }
   }
 }

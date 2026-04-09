@@ -1,6 +1,7 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
+import { ProfileAlreadyCompleteError } from "../errors/profile-already-complete-error";
 import { Address, AddressProps } from "../value-objects/address";
 import { Email } from "../value-objects/email";
 import type { OAuthProvider } from "../value-objects/oauth-provider";
@@ -74,14 +75,14 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   changeEmail(email: Email) {
-    if (this.props.email === email) return;
+    if (this.props.email.equals(email)) return;
 
     this.props.email = email;
     this.touch();
   }
 
   changePhone(phone: Phone) {
-    if (this.props.phone !== null && this.props.phone === phone) return;
+    if (this.props.phone?.equals(phone)) return;
 
     this.props.phone = phone;
     this.touch();
@@ -97,6 +98,10 @@ export class User extends AggregateRoot<UserProps> {
   }
 
   completeProfile(input: { phone: Phone; address: Address }) {
+    if (this.isProfileComplete()) {
+      throw new ProfileAlreadyCompleteError();
+    }
+
     this.props.phone = input.phone;
     this.props.address = input.address;
     this.touch();

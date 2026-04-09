@@ -1,8 +1,8 @@
-import { Payment } from "../../payment/entities/payment";
+import { Payment } from "../../payment/domain/entities/payment";
 import {
   CheckoutRecovery,
   CheckoutRecoveryReason,
-} from "../../payment/entities/checkout-recovery";
+} from "../../payment/domain/entities/checkout-recovery";
 import { Appointment } from "../../scheduling/domain/entities/appointment";
 import { AppointmentsRepository } from "../repositories/appointments-repository";
 import { CheckoutRecoveriesRepository } from "../repositories/checkout-recoveries-repository";

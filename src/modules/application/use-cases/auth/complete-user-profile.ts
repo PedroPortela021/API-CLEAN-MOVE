@@ -1,4 +1,5 @@
 import { User } from "../../../accounts/domain/entities/user";
+import { ProfileAlreadyCompleteError } from "../../../accounts/domain/errors/profile-already-complete-error";
 import { Address } from "../../../accounts/domain/value-objects/address";
 import { Phone } from "../../../accounts/domain/value-objects/phone";
 import { Either, left, right } from "../../../../shared/either";
@@ -31,11 +32,15 @@ export class CompleteUserProfileUseCase {
       return left(new ResourceNotFoundError({ resource: "user" }));
     }
 
-    if (user.isProfileComplete()) {
-      return left(new NotAllowedError("User profile is already complete."));
-    }
+    try {
+      user.completeProfile({ phone, address });
+    } catch (error) {
+      if (error instanceof ProfileAlreadyCompleteError) {
+        return left(new NotAllowedError(error.message));
+      }
 
-    user.completeProfile({ phone, address });
+      throw error;
+    }
 
     await this.usersRepository.save(user);
 
