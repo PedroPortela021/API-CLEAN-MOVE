@@ -1,7 +1,7 @@
 {
   "name": "api-clean-move",
   "version": "1.0.0",
-  "main": "dist/main.js",
+  "main": "dist/infra/main.js",
   "engines": {
     "node": ">=22 <23"
   },
@@ -12,8 +12,8 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "check:all": "npm run build && npm run lint && npm run format && npm run typecheck && npm run test",
-    "start": "node dist/main.js",
-    "start:dev": "ts-node src/main.ts",
+    "start": "node dist/infra/main.js",
+    "start:dev": "ts-node src/infra/main.ts",
     "test": "vitest run",
     "test:unit": "vitest run src",
     "test:infra": "vitest run test/infra",

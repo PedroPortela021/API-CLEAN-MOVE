@@ -18,9 +18,13 @@
     "skipLibCheck": true,
     "noEmit": true
   },
+  "ts-node": {
+    "experimentalResolver": true
+  },
   "include": [
     "src",
     "test",
+    "prisma.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
     "vitest.config.mts",
