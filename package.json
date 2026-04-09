@@ -12,6 +12,7 @@
     "format": "prettier . --write",
     "format:check": "prettier . --check",
     "check:all": "npm run build && npm run lint && npm run format && npm run typecheck && npm run test",
+    "prisma:generate": "prisma generate",
     "start": "node dist/infra/main.js",
     "start:dev": "ts-node src/infra/main.ts",
     "test": "vitest run",

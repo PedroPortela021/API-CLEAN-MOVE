@@ -9,6 +9,8 @@ jobs:
   vitest:
     name: Vitest Ubuntu
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api-clean-move
     steps:
       - uses: actions/checkout@v4
 
@@ -18,5 +20,6 @@ jobs:
           cache: "npm"
 
       - run: npm ci
+      - run: npm run prisma:generate
 
       - run: npm test -- --passWithNoTests
