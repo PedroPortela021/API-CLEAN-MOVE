@@ -4,13 +4,19 @@ import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { InvalidAppointmentStatusTransitionError } from "../../../scheduling/domain/errors/invalid-appointment-status-transition-error";
 import { makeAppointment } from "../../../../../tests/factories/appointment-factory";
 import { makeEstablishment } from "../../../../../tests/factories/establishment-factory";
+import { makePayment } from "../../../../../tests/factories/payment-factory";
 import { InMemoryAppointmentsRepository } from "../../../../../tests/repositories/in-memory-appointments-repository";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
+import { InMemoryPaymentsRepository } from "../../../../../tests/repositories/in-memory-payments-repository";
 import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
+import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
+import { registerDomainEventSubscribers } from "../../subscribers/register-domain-event-subscribers";
 import { CancelBookServiceUseCase } from "./cancel-book-service";
 
 let appointmentsRepository: InMemoryAppointmentsRepository;
 let establishmentsRepository: InMemoryEstablishmentsRepository;
+let paymentsRepository: InMemoryPaymentsRepository;
+let unitOfWork: InMemoryUnitOfWork;
 
 let sut: CancelBookServiceUseCase;
 
@@ -20,10 +26,17 @@ describe("Cancel book service", () => {
     establishmentsRepository = new InMemoryEstablishmentsRepository(
       new InMemoryServicesRepository(),
     );
+    paymentsRepository = new InMemoryPaymentsRepository();
+    unitOfWork = new InMemoryUnitOfWork();
+    registerDomainEventSubscribers({
+      appointmentsRepository,
+      paymentsRepository,
+    });
 
     sut = new CancelBookServiceUseCase(
       appointmentsRepository,
       establishmentsRepository,
+      unitOfWork,
     );
   });
 
@@ -154,6 +167,79 @@ describe("Cancel book service", () => {
     expect(result.value.appointment.status).toBe("CANCELLED");
     expect(result.value.appointment.reservationExpiresAt).toBeNull();
     expect(result.value.appointment.cancelledAt).toBeInstanceOf(Date);
+  });
+
+  it("should cancel initiated and pending payments linked to the appointment", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const appointment = makeAppointment(
+      {
+        establishmentId: establishment.id,
+        customerId: new UniqueEntityId("customer-1"),
+      },
+      new UniqueEntityId("appointment-1"),
+    );
+    const initiatedPayment = makePayment(
+      {
+        appointmentId: appointment.id,
+        customerId: appointment.customerId,
+        establishmentId: appointment.establishmentId,
+        status: "INITIATED",
+      },
+      new UniqueEntityId("payment-1"),
+    );
+    const pendingPayment = makePayment(
+      {
+        appointmentId: appointment.id,
+        customerId: appointment.customerId,
+        establishmentId: appointment.establishmentId,
+        status: "PENDING",
+        providerName: "FakePix",
+        providerPaymentId: "pix-payment-1",
+        pixQrCode: "qr-code",
+        pixCopyPasteCode: "copy-paste",
+        pixExpiresAt: new Date("2099-04-06T10:15:00"),
+      },
+      new UniqueEntityId("payment-2"),
+    );
+    const paidPayment = makePayment(
+      {
+        appointmentId: appointment.id,
+        customerId: appointment.customerId,
+        establishmentId: appointment.establishmentId,
+        status: "PAID",
+        providerName: "FakePix",
+        providerPaymentId: "pix-payment-2",
+        pixQrCode: "qr-code",
+        pixCopyPasteCode: "copy-paste",
+        pixExpiresAt: new Date("2099-04-06T10:15:00"),
+        paidAt: new Date("2026-04-06T10:10:00"),
+      },
+      new UniqueEntityId("payment-3"),
+    );
+
+    await establishmentsRepository.create(establishment);
+    await appointmentsRepository.create(appointment);
+    await paymentsRepository.create(initiatedPayment);
+    await paymentsRepository.create(pendingPayment);
+    await paymentsRepository.create(paidPayment);
+
+    const result = await sut.execute({
+      appointmentId: appointment.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: appointment.customerId.toString(),
+      },
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(paymentsRepository.items[0]?.status).toBe("CANCELLED");
+    expect(paymentsRepository.items[1]?.status).toBe("CANCELLED");
+    expect(paymentsRepository.items[2]?.status).toBe("PAID");
   });
 
   it("should return not allowed when the author does not own the appointment or establishment", async () => {

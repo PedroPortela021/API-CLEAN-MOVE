@@ -30,6 +30,7 @@ describe("Process payment webhook", () => {
     unitOfWork = new SpyUnitOfWork();
     registerDomainEventSubscribers({
       appointmentsRepository,
+      paymentsRepository,
     });
 
     sut = new ProcessPaymentWebhookUseCase(

@@ -29,6 +29,7 @@ describe("Expire pending pix payments", () => {
     unitOfWork = new SpyUnitOfWork();
     registerDomainEventSubscribers({
       appointmentsRepository,
+      paymentsRepository,
     });
 
     sut = new ExpirePendingPixPaymentsUseCase(
