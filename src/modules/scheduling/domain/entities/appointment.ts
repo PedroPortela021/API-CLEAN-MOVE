@@ -1,6 +1,7 @@
 import { AggregateRoot } from "../../../../shared/entities/aggregate-root";
 import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 import { Optional } from "../../../../shared/types/optional";
+import { AppointmentCancelledEvent } from "../events/appointment-cancelled-event";
 import { InvalidAppointmentPaymentWindowError } from "../errors/invalid-appointment-payment-window-error";
 import { InvalidAppointmentStatusTransitionError } from "../errors/invalid-appointment-status-transition-error";
 import { BookedServiceSnapshot } from "../value-objects/booked-service-snapshot";
@@ -232,6 +233,9 @@ export class Appointment extends AggregateRoot<AppointmentProps> {
     this.props.cancelledAt = new Date();
     this.props.reservationExpiresAt = null;
     this.touch();
+    this.addDomainEvent(
+      new AppointmentCancelledEvent(this, this.props.cancelledAt),
+    );
   }
 
   advanceStatus() {
