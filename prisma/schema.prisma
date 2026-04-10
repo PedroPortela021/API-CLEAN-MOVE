@@ -1,8 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider     = "prisma-client"
   output       = "../src/generated/prisma"
@@ -11,4 +6,259 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum UserRole {
+  CUSTOMER
+  ESTABLISHMENT
+  ADMIN
+}
+
+enum OAuthProvider {
+  GOOGLE
+}
+
+enum ServiceCategory {
+  WASH
+  SANITIZATION
+  AUTOMATIVE_DETAILING
+  PROTECTION
+  UPHOLSTERY
+}
+
+enum AppointmentStatus {
+  AWAITING_PAYMENT
+  EXPIRED
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
+  SCHEDULED
+}
+
+enum PaymentMethod {
+  PIX
+}
+
+enum PaymentStatus {
+  INITIATED
+  PENDING
+  PAID
+  EXPIRED
+  CANCELLED
+}
+
+enum CheckoutRecoveryReason {
+  PAYMENT_CREATION_FAILED
+  PAYMENT_GATEWAY_FAILED
+}
+
+enum CheckoutRecoveryStatus {
+  PENDING
+  RESOLVED
+}
+
+model User {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  email          String   @unique
+  hashedPassword String?  @map("hashed_password")
+  role           UserRole
+  phone          String?  @db.VarChar(11)
+  address        Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
+
+  socialAccounts     SocialAccount[]
+  passwordResetToken PasswordResetToken?
+  customer           Customer?
+  ownedEstablishment Establishment?      @relation("EstablishmentOwner")
+
+  @@index([role])
+  @@map("users")
+}
+
+model SocialAccount {
+  id        String        @id @default(uuid()) @db.Uuid
+  userId    String        @map("user_id") @db.Uuid
+  provider  OAuthProvider
+  subjectId String        @map("subject_id")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, subjectId])
+  @@index([userId])
+  @@map("social_accounts")
+}
+
+model PasswordResetToken {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @unique @map("user_id") @db.Uuid
+  hashedCode String   @map("hashed_code")
+  expiresAt  DateTime @map("expires_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([expiresAt])
+  @@map("password_reset_tokens")
+}
+
+model Customer {
+  id     String @id @default(uuid()) @db.Uuid
+  userId String @unique @map("user_id") @db.Uuid
+  cpf    String @unique @db.VarChar(11)
+
+  user         User                    @relation(fields: [userId], references: [id], onDelete: Restrict)
+  favorites    FavoriteEstablishment[]
+  appointments Appointment[]           @relation("CustomerAppointments")
+  payments     Payment[]               @relation("CustomerPayments")
+
+  @@map("customers")
+}
+
+model Establishment {
+  id             String @id @default(uuid()) @db.Uuid
+  ownerId        String @unique @map("owner_id") @db.Uuid
+  corporateName  String @map("corporate_name")
+  socialReason   String @map("social_reason")
+  slug           String @unique
+  operatingHours Json   @map("operating_hours")
+  cnpj           String @unique @db.VarChar(14)
+
+  owner        User                    @relation("EstablishmentOwner", fields: [ownerId], references: [id], onDelete: Restrict)
+  services     Service[]
+  appointments Appointment[]           @relation("EstablishmentAppointments")
+  payments     Payment[]               @relation("EstablishmentPayments")
+  favoritedBy  FavoriteEstablishment[]
+
+  @@index([corporateName])
+  @@map("establishments")
+}
+
+model Service {
+  id                            String          @id @default(uuid()) @db.Uuid
+  establishmentId               String          @map("establishment_id") @db.Uuid
+  serviceName                   String          @map("service_name") @db.VarChar(72)
+  description                   String          @db.Text
+  category                      ServiceCategory
+  estimatedDurationMinInMinutes Int             @map("estimated_duration_min_in_minutes")
+  estimatedDurationMaxInMinutes Int             @map("estimated_duration_max_in_minutes")
+  priceInCents                  Int             @map("price_in_cents")
+  isActive                      Boolean         @default(true) @map("is_active")
+  createdAt                     DateTime        @default(now()) @map("created_at")
+  updatedAt                     DateTime        @default(now()) @updatedAt @map("updated_at")
+
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Restrict)
+  appointments  Appointment[] @relation("BookedServiceAppointments")
+
+  @@index([establishmentId])
+  @@index([establishmentId, serviceName])
+  @@index([establishmentId, category])
+  @@index([establishmentId, priceInCents])
+  @@map("services")
+}
+
+model Appointment {
+  id                             String            @id @default(uuid()) @db.Uuid
+  establishmentId                String            @map("establishment_id") @db.Uuid
+  customerId                     String            @map("customer_id") @db.Uuid
+  bookedByCustomer               Boolean           @default(false) @map("booked_by_customer")
+  bookedServiceId                String            @map("booked_service_id") @db.Uuid
+  bookedServiceName              String            @map("booked_service_name") @db.VarChar(72)
+  bookedServiceCategory          ServiceCategory   @map("booked_service_category")
+  bookedServiceDurationInMinutes Int               @map("booked_service_duration_in_minutes")
+  bookedServicePriceInCents      Int               @map("booked_service_price_in_cents")
+  startsAt                       DateTime          @map("starts_at")
+  endsAt                         DateTime          @map("ends_at")
+  status                         AppointmentStatus @default(SCHEDULED)
+  createdAt                      DateTime          @default(now()) @map("created_at")
+  updatedAt                      DateTime          @default(now()) @updatedAt @map("updated_at")
+  confirmedAt                    DateTime?         @map("confirmed_at")
+  cancelledAt                    DateTime?         @map("cancelled_at")
+  expiredAt                      DateTime?         @map("expired_at")
+  reservationExpiresAt           DateTime?         @map("reservation_expires_at")
+
+  establishment      Establishment      @relation("EstablishmentAppointments", fields: [establishmentId], references: [id], onDelete: Restrict)
+  customer           Customer           @relation("CustomerAppointments", fields: [customerId], references: [id], onDelete: Restrict)
+  bookedService      Service            @relation("BookedServiceAppointments", fields: [bookedServiceId], references: [id], onDelete: Restrict)
+  payments           Payment[]          @relation("AppointmentPayments")
+  checkoutRecoveries CheckoutRecovery[] @relation("AppointmentCheckoutRecoveries")
+
+  @@index([establishmentId])
+  @@index([customerId])
+  @@index([bookedServiceId])
+  @@index([establishmentId, startsAt, endsAt])
+  @@index([customerId, createdAt])
+  @@index([establishmentId, createdAt])
+  @@index([customerId, status])
+  @@index([establishmentId, status])
+  @@map("appointments")
+}
+
+model Payment {
+  id                String        @id @default(uuid()) @db.Uuid
+  appointmentId     String        @map("appointment_id") @db.Uuid
+  customerId        String        @map("customer_id") @db.Uuid
+  establishmentId   String        @map("establishment_id") @db.Uuid
+  paymentMethod     PaymentMethod @default(PIX) @map("payment_method")
+  amountInCents     Int           @map("amount_in_cents")
+  providerName      String?       @map("provider_name")
+  providerPaymentId String?       @map("provider_payment_id")
+  pixQrCode         String?       @map("pix_qr_code") @db.Text
+  pixCopyPasteCode  String?       @map("pix_copy_paste_code") @db.Text
+  pixExpiresAt      DateTime?     @map("pix_expires_at")
+  status            PaymentStatus @default(INITIATED)
+  createdAt         DateTime      @default(now()) @map("created_at")
+  updatedAt         DateTime      @default(now()) @updatedAt @map("updated_at")
+  paidAt            DateTime?     @map("paid_at")
+  expiredAt         DateTime?     @map("expired_at")
+  cancelledAt       DateTime?     @map("cancelled_at")
+
+  appointment        Appointment        @relation("AppointmentPayments", fields: [appointmentId], references: [id], onDelete: Restrict)
+  customer           Customer           @relation("CustomerPayments", fields: [customerId], references: [id], onDelete: Restrict)
+  establishment      Establishment      @relation("EstablishmentPayments", fields: [establishmentId], references: [id], onDelete: Restrict)
+  checkoutRecoveries CheckoutRecovery[] @relation("PaymentCheckoutRecoveries")
+
+  @@unique([providerName, providerPaymentId])
+  @@index([appointmentId])
+  @@index([customerId])
+  @@index([establishmentId])
+  @@index([status, pixExpiresAt])
+  @@map("payments")
+}
+
+model CheckoutRecovery {
+  id                             String                 @id @default(uuid()) @db.Uuid
+  appointmentId                  String                 @map("appointment_id") @db.Uuid
+  paymentId                      String?                @map("payment_id") @db.Uuid
+  reason                         CheckoutRecoveryReason
+  appointmentCompensationPending Boolean                @map("appointment_compensation_pending")
+  paymentCompensationPending     Boolean                @map("payment_compensation_pending")
+  failureMessage                 String                 @map("failure_message") @db.Text
+  status                         CheckoutRecoveryStatus @default(PENDING)
+  createdAt                      DateTime               @default(now()) @map("created_at")
+  updatedAt                      DateTime               @default(now()) @updatedAt @map("updated_at")
+  resolvedAt                     DateTime?              @map("resolved_at")
+
+  appointment Appointment @relation("AppointmentCheckoutRecoveries", fields: [appointmentId], references: [id], onDelete: Restrict)
+  payment     Payment?    @relation("PaymentCheckoutRecoveries", fields: [paymentId], references: [id], onDelete: Restrict)
+
+  @@index([appointmentId])
+  @@index([paymentId])
+  @@index([status])
+  @@map("checkout_recoveries")
+}
+
+model FavoriteEstablishment {
+  id              String   @id @default(uuid()) @db.Uuid
+  customerId      String   @map("customer_id") @db.Uuid
+  establishmentId String   @map("establishment_id") @db.Uuid
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  customer      Customer      @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  establishment Establishment @relation(fields: [establishmentId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, establishmentId])
+  @@index([customerId])
+  @@index([establishmentId])
+  @@map("favorite_establishments")
 }
