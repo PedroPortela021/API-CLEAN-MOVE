@@ -1,6 +1,6 @@
 export class InvalidEmailError extends Error {
   constructor(value: string) {
-    super(`Invalid Email: ${value}`);
+    super(`Invalid email address: ${value}`);
     this.name = "InvalidEmailError";
   }
 }
@@ -17,7 +17,7 @@ export class Email {
    */
   constructor(value: string) {
     if (!Email.isValid(value)) {
-      throw new InvalidEmailError(`Invalid email address: ${value}`);
+      throw new InvalidEmailError(value);
     }
     this.value = value;
   }

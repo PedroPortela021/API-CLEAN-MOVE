@@ -1,6 +1,8 @@
+import { Injectable } from "@nestjs/common";
 import { ServiceCategory } from "../../catalog/domain/value-objects/service-category";
 import { Establishment } from "../../establishments/domain/entities/establishment";
 
+@Injectable()
 export abstract class EstablishmentsRepository {
   abstract create(data: Establishment): Promise<void>;
   abstract findById(id: string): Promise<Establishment | null>;
