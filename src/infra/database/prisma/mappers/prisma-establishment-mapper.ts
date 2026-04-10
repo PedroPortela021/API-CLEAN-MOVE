@@ -26,14 +26,18 @@ export class PrismaEstablishmentMapper {
   static toPrisma(
     raw: Establishment,
   ): Prisma.EstablishmentUncheckedCreateInput {
+    const operatingHours = {
+      days: raw.operatingHours.days,
+    } satisfies Prisma.InputJsonObject;
+
     return {
       id: raw.id.toString(),
       ownerId: raw.ownerId.toString(),
       corporateName: raw.corporateName,
       socialReason: raw.socialReason,
-      cnpj: raw.cnpj.formatted,
+      cnpj: raw.cnpj.value,
       slug: raw.slug.value,
-      operatingHours: raw.operatingHours.days,
+      operatingHours,
     };
   }
 }

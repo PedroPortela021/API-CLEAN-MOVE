@@ -8,9 +8,9 @@ export abstract class EstablishmentsRepository {
   abstract findById(id: string): Promise<Establishment | null>;
   abstract findByCnpj(cnpj: string): Promise<Establishment | null>;
   abstract findBySlug(slug: string): Promise<Establishment | null>;
-  abstract findBySlugAndCnpj(
-    cnpj: string,
+  abstract findBySlugOrCnpj(
     slug: string,
+    cnpj: string,
   ): Promise<Establishment | null>;
   abstract findMany(filters?: {
     establishmentName?: string;
