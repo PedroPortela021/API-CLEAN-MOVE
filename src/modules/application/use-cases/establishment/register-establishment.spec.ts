@@ -4,6 +4,7 @@ import { makeUser } from "../../../../../tests/factories/user-factory";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
+import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { Email } from "../../../accounts/domain/value-objects/email";
 import { InvalidRegisterEstablishmentInputError } from "../../../establishments/domain/errors/invalid-register-establishment-input-error";
@@ -14,6 +15,7 @@ import { RegisterEstablishmentUseCase } from "./register-establishment";
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryEstablishmentsRepository: InMemoryEstablishmentsRepository;
 let fakeHashGenerator: FakeHashGenerator;
+let inMemoryUnitOfWork: InMemoryUnitOfWork;
 
 let sut: RegisterEstablishmentUseCase;
 
@@ -43,11 +45,13 @@ describe("Register an establishment", () => {
       new InMemoryServicesRepository(),
     );
     fakeHashGenerator = new FakeHashGenerator();
+    inMemoryUnitOfWork = new InMemoryUnitOfWork();
 
     sut = new RegisterEstablishmentUseCase(
       inMemoryUsersRepository,
       inMemoryEstablishmentsRepository,
       fakeHashGenerator,
+      inMemoryUnitOfWork,
     );
   });
 
