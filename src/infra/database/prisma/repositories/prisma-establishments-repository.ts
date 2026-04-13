@@ -1,21 +1,79 @@
-// import { EstablishmentsRepository } from "../../../../modules/application/repositories/establishment-repository";
-// import { ServiceCategory } from "../../../../modules/catalog/domain/value-objects/service-category";
-// import { Establishment } from "../../../../modules/establishments/domain/entities/establishment";
-// import { PrismaService } from "../prisma.service";
+import { Injectable } from "@nestjs/common";
+import { EstablishmentsRepository } from "../../../../modules/application/repositories/establishment-repository";
+import { ServiceCategory } from "../../../../modules/catalog/domain/value-objects/service-category";
+import { Establishment } from "../../../../modules/establishments/domain/entities/establishment";
+import { PrismaUnitOfWork } from "../prisma-unit-of-work";
+import { rethrowPrismaRepositoryError } from "../prisma-repository-error-handler";
+import { PrismaService } from "../prisma.service";
+import { PrismaEstablishmentMapper } from "../mappers/prisma-establishment-mapper";
 
-// export class PrismaEstablishmentRepository implements EstablishmentsRepository {
-//   constructor(private prisma: PrismaService) {}
+@Injectable()
+export class PrismaEstablishmentRepository implements EstablishmentsRepository {
+  constructor(private prisma: PrismaService) {}
 
-//   async create(data: Establishment): Promise<void> {}
-//   async findByCnpj(cnpj: string): Promise<Establishment | null> {}
-//   async findById(id: string): Promise<Establishment | null> {}
-//   async findBySlug(slug: string): Promise<Establishment | null> {}
-//   async findBySlugAndCnpj(
-//     cnpj: string,
-//     slug: string,
-//   ): Promise<Establishment | null> {}
-//   async findMany(filters?: {
-//     establishmentName?: string;
-//     serviceCategory?: ServiceCategory;
-//   }): Promise<Establishment[]> {}
-// }
+  async create(establishment: Establishment): Promise<void> {
+    const data = PrismaEstablishmentMapper.toPrisma(establishment);
+
+    try {
+      await PrismaUnitOfWork.getClient(this.prisma).establishment.create({
+        data,
+      });
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
+  }
+
+  async findByCnpj(cnpj: string): Promise<Establishment | null> {
+    try {
+      const establishment = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findUnique({
+        where: {
+          cnpj,
+        },
+      });
+
+      if (!establishment) return null;
+
+      return PrismaEstablishmentMapper.toDomain(establishment);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
+  }
+
+  async findById(id: string): Promise<Establishment | null> {
+    void id;
+    throw new Error();
+  }
+  async findBySlug(slug: string): Promise<Establishment | null> {
+    void slug;
+    throw new Error();
+  }
+  async findBySlugOrCnpj(
+    slug: string,
+    cnpj: string,
+  ): Promise<Establishment | null> {
+    try {
+      const establishment = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findFirst({
+        where: {
+          OR: [{ slug }, { cnpj }],
+        },
+      });
+
+      if (!establishment) return null;
+
+      return PrismaEstablishmentMapper.toDomain(establishment);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
+  }
+  async findMany(filters?: {
+    establishmentName?: string;
+    serviceCategory?: ServiceCategory;
+  }): Promise<Establishment[]> {
+    void filters;
+    throw new Error();
+  }
+}

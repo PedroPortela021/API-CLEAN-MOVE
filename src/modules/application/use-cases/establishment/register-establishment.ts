@@ -1,66 +1,141 @@
+import { Injectable } from "@nestjs/common";
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
+import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
+import { PersistenceError } from "../../../../shared/errors/persistence-error";
+import { UniqueConstraintViolationError } from "../../../../shared/errors/unique-constraint-violation-error";
 import { User } from "../../../accounts/domain/entities/user";
-import { Address } from "../../../accounts/domain/value-objects/address";
-import { Email } from "../../../accounts/domain/value-objects/email";
-import { Phone } from "../../../accounts/domain/value-objects/phone";
+import {
+  Address,
+  AddressProps,
+  InvalidAddressError,
+} from "../../../accounts/domain/value-objects/address";
+import {
+  Email,
+  InvalidEmailError,
+} from "../../../accounts/domain/value-objects/email";
+import {
+  InvalidPhoneError,
+  Phone,
+} from "../../../accounts/domain/value-objects/phone";
 import { UserRole } from "../../../accounts/domain/value-objects/user-role";
 import { Establishment } from "../../../establishments/domain/entities/establishment";
-import { Cnpj } from "../../../establishments/domain/value-objects/cnpj";
-import { OperatingHours } from "../../../establishments/domain/value-objects/operating-hours";
+import { InvalidRegisterEstablishmentInputError } from "../../../establishments/domain/errors/invalid-register-establishment-input-error";
+import {
+  Cnpj,
+  InvalidCnpjError,
+} from "../../../establishments/domain/value-objects/cnpj";
+import {
+  InvalidOperatingHoursError,
+  OperatingHours,
+  OperatingHoursProps,
+} from "../../../establishments/domain/value-objects/operating-hours";
 import { Slug } from "../../../establishments/domain/value-objects/slug";
 import { EstablishmentsRepository } from "../../repositories/establishment-repository";
 import { HashGenerator } from "../../repositories/hash-generator";
+import { UnitOfWork } from "../../repositories/unit-of-work";
 import { UsersRepository } from "../../repositories/users-repository";
 
 type RegisterEstablishmentUseCaseRequest = {
   name: string;
   corporateName: string;
   socialReason: string;
-  email: Email;
+  email: string;
   password: string;
-  cnpj: Cnpj;
-  operatingHours: OperatingHours;
-  phone: Phone;
-  address: Address;
-  slug?: Slug;
+  cnpj: string;
+  operatingHours: OperatingHoursProps;
+  phone: string;
+  address: AddressProps;
+  slug?: string | undefined;
 };
 
 type RegisterEstablishmentUseCaseResponse = Either<
-  ResourceAlreadyExistsError,
+  | ResourceAlreadyExistsError
+  | InvalidRegisterEstablishmentInputError
+  | UnexpectedDomainError,
   {
     establishment: Establishment;
   }
 >;
 
+@Injectable()
 export class RegisterEstablishmentUseCase {
   constructor(
     private usersRepository: UsersRepository,
     private establishmentsRepository: EstablishmentsRepository,
     private hashGenerator: HashGenerator,
+    private unitOfWork: UnitOfWork,
   ) {}
 
   async execute({
     name,
     corporateName,
     socialReason,
-    email,
+    email: rawEmail,
     password,
-    cnpj,
-    operatingHours,
-    phone,
-    address,
+    cnpj: rawCnpj,
+    operatingHours: rawOperatingHours,
+    phone: rawPhone,
+    address: rawAddress,
     slug: rawSlug,
   }: RegisterEstablishmentUseCaseRequest): Promise<RegisterEstablishmentUseCaseResponse> {
-    const slug = rawSlug ?? Slug.createFromText(corporateName);
+    const slug = rawSlug
+      ? Slug.create(rawSlug)
+      : Slug.createFromText(corporateName);
 
-    const [establishmentWithTheSameCnpj, userWithTheSameEmail] =
-      await Promise.all([
-        this.establishmentsRepository.findBySlugAndCnpj(cnpj.value, slug.value),
-        this.usersRepository.findByEmail(email.toString()),
-      ]);
+    let email;
+    let cnpj;
+    let operatingHours;
+    let phone;
+    let address;
 
-    if (establishmentWithTheSameCnpj || userWithTheSameEmail) {
+    try {
+      email = new Email(rawEmail);
+      cnpj = Cnpj.create(rawCnpj);
+      operatingHours = OperatingHours.create(rawOperatingHours);
+      phone = Phone.create(rawPhone);
+      address = Address.create(rawAddress);
+    } catch (error) {
+      if (
+        error instanceof InvalidEmailError ||
+        error instanceof InvalidCnpjError ||
+        error instanceof InvalidOperatingHoursError ||
+        error instanceof InvalidPhoneError ||
+        error instanceof InvalidAddressError
+      ) {
+        return left(new InvalidRegisterEstablishmentInputError(error.message));
+      }
+
+      return left(new UnexpectedDomainError());
+    }
+
+    let establishmentWithTheSameSlugOrCnpj;
+    let userWithTheSameEmail;
+
+    try {
+      [establishmentWithTheSameSlugOrCnpj, userWithTheSameEmail] =
+        await Promise.all([
+          this.establishmentsRepository.findBySlugOrCnpj(
+            slug.value,
+            cnpj.value,
+          ),
+          this.usersRepository.findByEmail(email.toString()),
+        ]);
+    } catch (error) {
+      if (error instanceof UniqueConstraintViolationError) {
+        return left(
+          new ResourceAlreadyExistsError("Establishment already registered."),
+        );
+      }
+
+      if (error instanceof PersistenceError) {
+        return left(new UnexpectedDomainError());
+      }
+
+      return left(new UnexpectedDomainError());
+    }
+
+    if (establishmentWithTheSameSlugOrCnpj || userWithTheSameEmail) {
       return left(
         new ResourceAlreadyExistsError("Establishment already registered."),
       );
@@ -90,10 +165,24 @@ export class RegisterEstablishmentUseCase {
       slug,
     });
 
-    await Promise.all([
-      this.usersRepository.create(user),
-      this.establishmentsRepository.create(establishment),
-    ]);
+    try {
+      await this.unitOfWork.execute(async () => {
+        await this.usersRepository.create(user);
+        await this.establishmentsRepository.create(establishment);
+      });
+    } catch (error) {
+      if (error instanceof UniqueConstraintViolationError) {
+        return left(
+          new ResourceAlreadyExistsError("Establishment already registered."),
+        );
+      }
+
+      if (error instanceof PersistenceError) {
+        return left(new UnexpectedDomainError());
+      }
+
+      return left(new UnexpectedDomainError());
+    }
 
     return right({
       establishment,

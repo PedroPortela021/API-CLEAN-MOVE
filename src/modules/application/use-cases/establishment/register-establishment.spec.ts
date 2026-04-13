@@ -4,23 +4,23 @@ import { makeUser } from "../../../../../tests/factories/user-factory";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
 import { InMemoryEstablishmentsRepository } from "../../../../../tests/repositories/in-memory-establishment-repository";
 import { InMemoryServicesRepository } from "../../../../../tests/repositories/in-memory-services-repository";
+import { InMemoryUnitOfWork } from "../../../../../tests/repositories/in-memory-unit-of-work";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
-import { Address } from "../../../accounts/domain/value-objects/address";
 import { Email } from "../../../accounts/domain/value-objects/email";
-import { Phone } from "../../../accounts/domain/value-objects/phone";
+import { InvalidRegisterEstablishmentInputError } from "../../../establishments/domain/errors/invalid-register-establishment-input-error";
 import { Cnpj } from "../../../establishments/domain/value-objects/cnpj";
-import { OperatingHours } from "../../../establishments/domain/value-objects/operating-hours";
-import { Slug } from "../../../establishments/domain/value-objects/slug";
+import { OperatingHoursProps } from "../../../establishments/domain/value-objects/operating-hours";
 import { RegisterEstablishmentUseCase } from "./register-establishment";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryEstablishmentsRepository: InMemoryEstablishmentsRepository;
 let fakeHashGenerator: FakeHashGenerator;
+let inMemoryUnitOfWork: InMemoryUnitOfWork;
 
 let sut: RegisterEstablishmentUseCase;
 
-function makeOperatingHours() {
-  return OperatingHours.create({
+function makeOperatingHours(): OperatingHoursProps {
+  return {
     days: [
       {
         day: "MONDAY",
@@ -35,7 +35,7 @@ function makeOperatingHours() {
         ranges: [],
       },
     ],
-  });
+  };
 }
 
 describe("Register an establishment", () => {
@@ -45,31 +45,33 @@ describe("Register an establishment", () => {
       new InMemoryServicesRepository(),
     );
     fakeHashGenerator = new FakeHashGenerator();
+    inMemoryUnitOfWork = new InMemoryUnitOfWork();
 
     sut = new RegisterEstablishmentUseCase(
       inMemoryUsersRepository,
       inMemoryEstablishmentsRepository,
       fakeHashGenerator,
+      inMemoryUnitOfWork,
     );
   });
 
   it("should be able to register an establishment with valid data", async () => {
     const result = await sut.execute({
       name: "Jon Doe",
-      address: Address.create({
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
-      cnpj: Cnpj.create("37.158.666/0001-82"),
+      },
+      cnpj: "37.158.666/0001-82",
       corporateName: "Valid Establishment",
       socialReason: "SOCIAL REASON TEST LTDA",
-      email: new Email("jondoe@example.com"),
+      email: "jondoe@example.com",
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: Phone.create("11987654321"),
+      phone: "11987654321",
     });
 
     expect(result.isRight()).toBe(true);
@@ -101,20 +103,20 @@ describe("Register an establishment", () => {
 
     const result = await sut.execute({
       name: "UserWithTheSameEmail",
-      address: Address.create({
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
-      cnpj: Cnpj.create("03823548000120"),
+      },
+      cnpj: "03823548000120",
       corporateName: "Establishment-2",
       socialReason: "SOCIAL REASON TEST LTDA 2",
-      email: new Email("jondoe@example.com"),
+      email: "jondoe@example.com",
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: Phone.create("11987654321"),
+      phone: "11987654321",
     });
 
     expect(result.isLeft()).toBe(true);
@@ -128,21 +130,21 @@ describe("Register an establishment", () => {
   it("should persist the custom slug passed to the use case", async () => {
     const result = await sut.execute({
       name: "Jon Doe",
-      address: Address.create({
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
-      cnpj: Cnpj.create("41.437.902/0001-77"),
+      },
+      cnpj: "41.437.902/0001-77",
       corporateName: "Valid Establishment",
       socialReason: "SOCIAL REASON TEST LTDA",
-      email: new Email("custom-slug@example.com"),
+      email: "custom-slug@example.com",
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: Phone.create("11987654321"),
-      slug: Slug.create("custom-establishment-slug"),
+      phone: "11987654321",
+      slug: "custom-establishment-slug",
     });
 
     expect(result.isRight()).toBe(true);
@@ -165,20 +167,20 @@ describe("Register an establishment", () => {
 
     const result = await sut.execute({
       name: "EstablishmentWithTheSameCnpj",
-      address: Address.create({
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
-      cnpj: Cnpj.create("41.437.902/0001-77"),
+      },
+      cnpj: "41.437.902/0001-77",
       corporateName: "Establishment-2",
       socialReason: "SOCIAL REASON TEST LTDA",
-      email: new Email("jondoe@example.com"),
+      email: "jondoe@example.com",
       operatingHours: makeOperatingHours(),
       password: "jondoe@123",
-      phone: Phone.create("11987654321"),
+      phone: "11987654321",
     });
 
     expect(result.isLeft()).toBe(true);
@@ -192,52 +194,64 @@ describe("Register an establishment", () => {
     expect(inMemoryUsersRepository.items).toHaveLength(0);
   });
 
-  it("not should be able to build the use case input with invalid email", () => {
-    expect(() =>
-      sut.execute({
-        name: "Jon Doe",
-        address: Address.create({
-          city: "city-1",
-          country: "country-1",
-          state: "state-1",
-          street: "street-1",
-          zipCode: "11111-111",
-        }),
-        cnpj: Cnpj.create("18472512000116"),
-        corporateName: "Establishment-1",
-        socialReason: "SOCIAL REASON TEST LTDA",
-        email: new Email("invalid-format"),
-        operatingHours: makeOperatingHours(),
-        password: "jondoe@123",
-        phone: Phone.create("11987654321"),
-      }),
-    ).toThrow("Invalid email address: invalid-format");
+  it("not should be able to register an establishment with invalid email", async () => {
+    const result = await sut.execute({
+      name: "Jon Doe",
+      address: {
+        city: "city-1",
+        country: "country-1",
+        state: "state-1",
+        street: "street-1",
+        zipCode: "11111-111",
+      },
+      cnpj: "18472512000116",
+      corporateName: "Establishment-1",
+      socialReason: "SOCIAL REASON TEST LTDA",
+      email: "invalid-format",
+      operatingHours: makeOperatingHours(),
+      password: "jondoe@123",
+      phone: "11987654321",
+    });
 
+    expect(result.isLeft()).toBe(true);
+
+    if (result.isRight()) {
+      throw new Error("Expected invalid establishment input.");
+    }
+
+    expect(result.value).toBeInstanceOf(InvalidRegisterEstablishmentInputError);
+    expect(result.value.message).toBe("Invalid email address: invalid-format");
     expect(inMemoryUsersRepository.items).toHaveLength(0);
     expect(inMemoryEstablishmentsRepository.items).toHaveLength(0);
   });
 
-  it("not should be able to build the use case input with invalid cnpj", () => {
-    expect(() =>
-      sut.execute({
-        name: "Jon Doe",
-        address: Address.create({
-          city: "city-1",
-          country: "country-1",
-          state: "state-1",
-          street: "street-1",
-          zipCode: "11111-111",
-        }),
-        cnpj: Cnpj.create("05027115000191"),
-        corporateName: "Establishment-1",
-        socialReason: "SOCIAL REASON TEST LTDA",
-        email: new Email("validemail@example.com"),
-        operatingHours: makeOperatingHours(),
-        password: "jondoe@123",
-        phone: Phone.create("11987654321"),
-      }),
-    ).toThrow("Invalid CNPJ: 05027115000191");
+  it("not should be able to register an establishment with invalid cnpj", async () => {
+    const result = await sut.execute({
+      name: "Jon Doe",
+      address: {
+        city: "city-1",
+        country: "country-1",
+        state: "state-1",
+        street: "street-1",
+        zipCode: "11111-111",
+      },
+      cnpj: "05027115000191",
+      corporateName: "Establishment-1",
+      socialReason: "SOCIAL REASON TEST LTDA",
+      email: "validemail@example.com",
+      operatingHours: makeOperatingHours(),
+      password: "jondoe@123",
+      phone: "11987654321",
+    });
 
+    expect(result.isLeft()).toBe(true);
+
+    if (result.isRight()) {
+      throw new Error("Expected invalid establishment input.");
+    }
+
+    expect(result.value).toBeInstanceOf(InvalidRegisterEstablishmentInputError);
+    expect(result.value.message).toBe("Invalid CNPJ: 05027115000191");
     expect(inMemoryUsersRepository.items).toHaveLength(0);
     expect(inMemoryEstablishmentsRepository.items).toHaveLength(0);
   });

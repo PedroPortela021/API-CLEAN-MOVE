@@ -7,6 +7,9 @@
   },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "dev": "bash ./scripts/dev.sh",
+    "docker:up": "docker compose up -d",
+    "docker:stop": "docker compose stop",
     "lint": "eslint . --cache --cache-location .eslintcache",
     "lint:fix": "npm run lint -- --fix",
     "format": "prettier . --write",
@@ -36,6 +39,7 @@
   "devDependencies": {
     "@faker-js/faker": "^10.3.0",
     "@nestjs/testing": "^11.1.17",
+    "@types/bcrypt": "^6.0.0",
     "@types/node": "^24.10.2",
     "eslint": "^8.57.1",
     "eslint-config-prettier": "10.1.8",
@@ -54,6 +58,7 @@
     "@nestjs/platform-express": "^11.1.17",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.6.0",
+    "bcrypt": "^6.0.0",
     "dayjs": "1.11.19",
     "pg": "^8.20.0",
     "reflect-metadata": "^0.2.2",
