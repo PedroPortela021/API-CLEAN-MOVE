@@ -115,7 +115,10 @@ export class RegisterEstablishmentUseCase {
     try {
       [establishmentWithTheSameSlugOrCnpj, userWithTheSameEmail] =
         await Promise.all([
-          this.establishmentsRepository.findBySlugOrCnpj(slug.value, cnpj.value),
+          this.establishmentsRepository.findBySlugOrCnpj(
+            slug.value,
+            cnpj.value,
+          ),
           this.usersRepository.findByEmail(email.toString()),
         ]);
     } catch (error) {

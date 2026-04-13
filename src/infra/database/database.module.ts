@@ -27,6 +27,11 @@ import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
       useClass: PrismaUsersRepository,
     },
   ],
-  exports: [PrismaService, UnitOfWork, EstablishmentsRepository, UsersRepository],
+  exports: [
+    PrismaService,
+    UnitOfWork,
+    EstablishmentsRepository,
+    UsersRepository,
+  ],
 })
 export class DatabaseModule {}

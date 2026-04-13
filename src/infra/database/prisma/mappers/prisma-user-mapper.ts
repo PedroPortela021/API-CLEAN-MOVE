@@ -1,5 +1,8 @@
 import z from "zod";
-import { Prisma, User as PrismaUser } from "../../../../generated/prisma/browser";
+import {
+  Prisma,
+  User as PrismaUser,
+} from "../../../../generated/prisma/browser";
 import { User } from "../../../../modules/accounts/domain/entities/user";
 import { Address } from "../../../../modules/accounts/domain/value-objects/address";
 import { Email } from "../../../../modules/accounts/domain/value-objects/email";
@@ -17,7 +20,9 @@ const addressSchema = z.object({
 export class PrismaUserMapper {
   static toDomain(raw: PrismaUser): User {
     const address =
-      raw.address === null ? null : Address.create(addressSchema.parse(raw.address));
+      raw.address === null
+        ? null
+        : Address.create(addressSchema.parse(raw.address));
 
     return User.create(
       {
