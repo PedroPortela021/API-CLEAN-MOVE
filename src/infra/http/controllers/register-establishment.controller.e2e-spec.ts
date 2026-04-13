@@ -48,6 +48,10 @@ function makeRegisterEstablishmentPayload() {
   };
 }
 
+function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
+  return app.getHttpServer() as Parameters<typeof request>[0];
+}
+
 describe("RegisterEstablishmentController (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
@@ -68,7 +72,7 @@ describe("RegisterEstablishmentController (e2e)", () => {
   });
 
   it("should register an establishment and persist the data", async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(getHttpServer(app))
       .post("/register/establishment")
       .send(makeRegisterEstablishmentPayload());
     const responseBody = registerEstablishmentResponseSchema.parse(
@@ -97,7 +101,7 @@ describe("RegisterEstablishmentController (e2e)", () => {
   });
 
   it("should start each test with a clean database", async () => {
-    const response = await request(app.getHttpServer())
+    const response = await request(getHttpServer(app))
       .post("/register/establishment")
       .send(makeRegisterEstablishmentPayload());
 
