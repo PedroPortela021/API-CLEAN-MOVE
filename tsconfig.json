@@ -23,11 +23,11 @@
   },
   "include": [
     "src",
-    "test",
     "prisma.config.ts",
     "**/*.spec.ts",
     "**/*.test.ts",
     "vitest.config.mts",
+    "vitest.e2e.config.mts",
     "tests"
   ],
   "exclude": ["node_modules", "dist", "coverage"]
