@@ -6,6 +6,8 @@ import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
 import { Cnpj } from "../../src/modules/establishments/domain/value-objects/cnpj";
 import { OperatingHours } from "../../src/modules/establishments/domain/value-objects/operating-hours";
 import { makeCompanyName, makeUsername } from "./random-data";
+import { PrismaService } from "../../src/infra/database/prisma/prisma.service";
+import { PrismaEstablishmentMapper } from "../../src/infra/database/prisma/mappers/prisma-establishment-mapper";
 
 export function makeEstablishment(
   override?: Partial<EstablishmentProps>,
@@ -39,4 +41,18 @@ export function makeEstablishment(
   );
 
   return establishment;
+}
+
+export class EstablishmentFactory {
+  constructor(private prisma: PrismaService) {}
+
+  async makePrismaEstablishment(data?: Partial<EstablishmentProps>) {
+    const establishment = makeEstablishment(data);
+
+    await this.prisma.establishment.create({
+      data: PrismaEstablishmentMapper.toPrisma(establishment),
+    });
+
+    return establishment;
+  }
 }
