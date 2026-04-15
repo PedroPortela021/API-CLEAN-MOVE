@@ -6,8 +6,6 @@ import z from "zod";
 import { PrismaService } from "../../database/prisma/prisma.service";
 import { Test } from "@nestjs/testing";
 import { AppModule } from "../../app.module";
-import { DatabaseModule } from "../../database/database.module";
-import { AuthModule } from "../../auth/auth.module";
 
 const registerEstablishmentResponseSchema = z.object({
   establishmentId: z.uuid(),
@@ -58,11 +56,11 @@ describe("RegisterEstablishmentController (e2e)", () => {
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
-      imports: [AppModule, DatabaseModule, AuthModule],
-      providers: [],
+      imports: [AppModule],
     }).compile();
 
     app = moduleRef.createNestApplication();
+    await app.init();
 
     prisma = moduleRef.get(PrismaService);
   });
