@@ -69,12 +69,33 @@ model User {
   updatedAt      DateTime @default(now()) @updatedAt @map("updated_at")
 
   socialAccounts     SocialAccount[]
+  sessions           Session[]
   passwordResetToken PasswordResetToken?
   customer           Customer?
   ownedEstablishment Establishment?      @relation("EstablishmentOwner")
 
   @@index([role])
   @@map("users")
+}
+
+model Session {
+  id               String    @id @default(uuid()) @db.Uuid
+  userId           String    @map("user_id") @db.Uuid
+  refreshTokenHash String    @unique @map("refresh_token_hash")
+  expiresAt        DateTime  @map("expires_at")
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @default(now()) @updatedAt @map("updated_at")
+  revokedAt        DateTime? @map("revoked_at")
+  lastUsedAt       DateTime? @map("last_used_at")
+  userAgent        String?   @map("user_agent")
+  ipAddress        String?   @map("ip_address")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([revokedAt])
+  @@map("sessions")
 }
 
 model SocialAccount {
