@@ -1,18 +1,24 @@
 import { ResourceAlreadyExistsError } from "../../../../shared/errors/resource-already-exists-error";
+import { UnitOfWork } from "../../repositories/unit-of-work";
 import { makeCustomer } from "../../../../../tests/factories/customer-factory";
 import { makeUser } from "../../../../../tests/factories/user-factory";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
 import { InMemoryCustomersRepository } from "../../../../../tests/repositories/in-memory-customers-repository";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
-import { Address } from "../../../accounts/domain/value-objects/address";
 import { Cpf } from "../../../accounts/domain/value-objects/cpf";
 import { Email } from "../../../accounts/domain/value-objects/email";
-import { Phone } from "../../../accounts/domain/value-objects/phone";
 import { RegisterCustomerUseCase } from "./register-customer";
+
+class FakeUnitOfWork extends UnitOfWork {
+  protected perform<T>(work: () => Promise<T>): Promise<T> {
+    return work();
+  }
+}
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryCustomersRepository: InMemoryCustomersRepository;
 let fakeHashGenerator: FakeHashGenerator;
+let fakeUnitOfWork: FakeUnitOfWork;
 
 let sut: RegisterCustomerUseCase;
 
@@ -21,28 +27,30 @@ describe("Register a customer", () => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemoryCustomersRepository = new InMemoryCustomersRepository();
     fakeHashGenerator = new FakeHashGenerator();
+    fakeUnitOfWork = new FakeUnitOfWork();
 
     sut = new RegisterCustomerUseCase(
       inMemoryUsersRepository,
       inMemoryCustomersRepository,
       fakeHashGenerator,
+      fakeUnitOfWork,
     );
   });
 
   it("should be able to register a customer with valid data", async () => {
     const result = await sut.execute({
-      cpf: Cpf.create("529.982.247-25"),
+      cpf: "529.982.247-25",
       name: "John Doe",
-      email: new Email("johndoe@example.com"),
+      email: "johndoe@example.com",
       password: "johndoe@123",
-      phone: Phone.create("11987654321"),
-      address: Address.create({
+      phone: "11987654321",
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
+      },
     });
 
     expect(result.isRight()).toBe(true);
@@ -68,18 +76,18 @@ describe("Register a customer", () => {
     await inMemoryUsersRepository.create(createdUser);
 
     const result = await sut.execute({
-      cpf: Cpf.create("52998224725"),
+      cpf: "52998224725",
       name: "CustomerWithTheSameEmail",
-      email: new Email("johndoe@example.com"),
+      email: "johndoe@example.com",
       password: "johndoe@123",
-      phone: Phone.create("11987654321"),
-      address: Address.create({
+      phone: "11987654321",
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
+      },
     });
 
     expect(result.isLeft()).toBe(true);
@@ -98,18 +106,18 @@ describe("Register a customer", () => {
     await inMemoryCustomersRepository.create(createdCustomer);
 
     const result = await sut.execute({
-      cpf: Cpf.create("529.982.247-25"),
+      cpf: "529.982.247-25",
       name: "CustomerWithTheSameCpf",
-      email: new Email("johndoe@example.com"),
+      email: "johndoe@example.com",
       password: "johndoe@123",
-      phone: Phone.create("11987654321"),
-      address: Address.create({
+      phone: "11987654321",
+      address: {
         city: "city-1",
         country: "country-1",
         state: "state-1",
         street: "street-1",
         zipCode: "11111-111",
-      }),
+      },
     });
 
     expect(result.isLeft()).toBe(true);
