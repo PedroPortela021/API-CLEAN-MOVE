@@ -11,6 +11,10 @@ const registerEstablishmentResponseSchema = z.object({
   establishmentId: z.uuid(),
 });
 
+const singleMessageResponseSchema = z.object({
+  message: z.string(),
+});
+
 const validationErrorResponseSchema = z.object({
   statusCode: z.literal(400),
   message: z.literal("Validation failed"),
@@ -142,7 +146,10 @@ describe("RegisterEstablishmentController (e2e)", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Invalid CNPJ: 05027115000191");
+
+    const responseBody = singleMessageResponseSchema.parse(response.body);
+
+    expect(responseBody.message).toBe("Invalid CNPJ: 05027115000191");
 
     expect(await prisma.user.count()).toBe(0);
     expect(await prisma.establishment.count()).toBe(0);
@@ -187,7 +194,10 @@ describe("RegisterEstablishmentController (e2e)", () => {
       .send(makeAnotherRegisterEstablishmentPayload());
 
     expect(response.status).toBe(409);
-    expect(response.body.message).toBe("Establishment already registered.");
+
+    const responseBody = singleMessageResponseSchema.parse(response.body);
+
+    expect(responseBody.message).toBe("Establishment already registered.");
 
     expect(
       await prisma.user.count({

@@ -11,6 +11,10 @@ const registerCustomerResponseSchema = z.object({
   customerId: z.uuid(),
 });
 
+const singleMessageResponseSchema = z.object({
+  message: z.string(),
+});
+
 const validationErrorResponseSchema = z.object({
   statusCode: z.literal(400),
   message: z.literal("Validation failed"),
@@ -120,7 +124,10 @@ describe("RegisterCustomerController (e2e)", () => {
       });
 
     expect(response.status).toBe(400);
-    expect(response.body.message).toBe("Invalid CPF: 111.111.111-11");
+
+    const responseBody = singleMessageResponseSchema.parse(response.body);
+
+    expect(responseBody.message).toBe("Invalid CPF: 111.111.111-11");
 
     expect(await prisma.user.count()).toBe(0);
     expect(await prisma.customer.count()).toBe(0);
@@ -165,7 +172,10 @@ describe("RegisterCustomerController (e2e)", () => {
       .send(makeAnotherRegisterCustomerPayload());
 
     expect(response.status).toBe(409);
-    expect(response.body.message).toBe("Customer already registered.");
+
+    const responseBody = singleMessageResponseSchema.parse(response.body);
+
+    expect(responseBody.message).toBe("Customer already registered.");
 
     expect(
       await prisma.user.count({
