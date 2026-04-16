@@ -13,6 +13,7 @@ const jwtExpiresInSchema = z.custom<StringValue>(
 
 export const envSchema = z.object({
   PORT: z.coerce.number().optional().default(3000),
+  FRONTEND_URL: z.url(),
   POSTGRES_HOST: z.string(),
   POSTGRES_PORT: z.coerce.number().optional().default(5432),
   POSTGRES_DB: z.string(),
@@ -22,6 +23,7 @@ export const envSchema = z.object({
   NODE_ENV: nodeEnvSchema.default("development"),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: jwtExpiresInSchema.default("15m"),
+  REFRESH_TOKEN_TTL_IN_MS: z.coerce.number().int().positive(),
 });
 
 export type NodeEnv = z.infer<typeof nodeEnvSchema>;
