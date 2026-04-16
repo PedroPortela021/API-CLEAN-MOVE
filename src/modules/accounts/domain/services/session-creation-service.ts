@@ -33,7 +33,9 @@ export class SessionCreationService {
     }
 
     if (!Number.isFinite(ttlInMs) || ttlInMs <= 0) {
-      throw new InvalidSessionCreationError("ttlInMs must be greater than zero.");
+      throw new InvalidSessionCreationError(
+        "ttlInMs must be greater than zero.",
+      );
     }
 
     const normalizedUserAgent = userAgent?.trim() || null;

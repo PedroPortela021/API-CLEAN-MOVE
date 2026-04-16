@@ -18,9 +18,7 @@ describe("SessionCreationService", () => {
     expect(session.isExpired(referenceDate)).toBe(false);
     expect(session.createdAt).toEqual(referenceDate);
     expect(session.updatedAt).toEqual(referenceDate);
-    expect(session.expiresAt).toEqual(
-      new Date("2026-05-16T10:00:00.000Z"),
-    );
+    expect(session.expiresAt).toEqual(new Date("2026-05-16T10:00:00.000Z"));
     expect(session.lastUsedAt).toBeNull();
     expect(session.userAgent).toBeNull();
     expect(session.ipAddress).toBeNull();
