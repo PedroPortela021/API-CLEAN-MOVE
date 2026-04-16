@@ -8,6 +8,8 @@ import { UsersRepository } from "../../modules/application/repositories/users-re
 import { PrismaUsersRepository } from "./prisma/repositories/prisma-users-repository";
 import { UnitOfWork } from "../../modules/application/repositories/unit-of-work";
 import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
+import { SessionsRepository } from "../../modules/application/repositories/sessions-repository";
+import { PrismaSessionsRepository } from "./prisma/repositories/prisma-sessions-repository";
 
 @Global()
 @Module({
@@ -26,12 +28,17 @@ import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
       provide: UsersRepository,
       useClass: PrismaUsersRepository,
     },
+    {
+      provide: SessionsRepository,
+      useClass: PrismaSessionsRepository,
+    },
   ],
   exports: [
     PrismaService,
     UnitOfWork,
     EstablishmentsRepository,
     UsersRepository,
+    SessionsRepository,
   ],
 })
 export class DatabaseModule {}
