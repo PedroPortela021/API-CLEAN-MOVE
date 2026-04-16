@@ -7,8 +7,8 @@ import z from "zod";
 import { AppModule } from "../../app.module";
 import { PrismaService } from "../../database/prisma/prisma.service";
 
-const registerEstablishmentResponseSchema = z.object({
-  establishmentId: z.uuid(),
+const registerCustomerResponseSchema = z.object({
+  customerId: z.uuid(),
 });
 
 const singleMessageResponseSchema = z.object({
@@ -30,14 +30,12 @@ const validationErrorResponseSchema = z.object({
   target: z.literal("body"),
 });
 
-function makeRegisterEstablishmentPayload() {
+function makeRegisterCustomerPayload() {
   return {
+    cpf: "529.982.247-25",
     name: "Jon Doe",
-    corporateName: "Valid Establishment",
-    socialReason: "SOCIAL REASON TEST LTDA",
     email: "jondoe@example.com",
     password: "jondoe@123",
-    cnpj: "37.158.666/0001-82",
     phone: "11987654321",
     address: {
       street: "street-1",
@@ -46,32 +44,14 @@ function makeRegisterEstablishmentPayload() {
       zipCode: "11111-111",
       city: "city-1",
     },
-    operatingHours: {
-      days: [
-        {
-          day: "MONDAY",
-          ranges: [{ start: "08:00", end: "18:00" }],
-        },
-        {
-          day: "SATURDAY",
-          ranges: [{ start: "08:00", end: "12:00" }],
-        },
-        {
-          day: "SUNDAY",
-          ranges: [],
-        },
-      ],
-    },
   };
 }
 
-function makeAnotherRegisterEstablishmentPayload() {
+function makeAnotherRegisterCustomerPayload() {
   return {
-    ...makeRegisterEstablishmentPayload(),
+    ...makeRegisterCustomerPayload(),
+    cpf: "111.444.777-35",
     name: "Jane Doe",
-    corporateName: "Another Establishment",
-    socialReason: "ANOTHER SOCIAL REASON LTDA",
-    cnpj: "41.437.902/0001-77",
     phone: "21987654321",
     address: {
       street: "street-2",
@@ -87,7 +67,7 @@ function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
   return app.getHttpServer() as Parameters<typeof request>[0];
 }
 
-describe("RegisterEstablishmentController (e2e)", () => {
+describe("RegisterCustomerController (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
 
@@ -106,18 +86,16 @@ describe("RegisterEstablishmentController (e2e)", () => {
     await app.close();
   });
 
-  it("should register an establishment and persist the data", async () => {
+  it("should register a customer and persist the data", async () => {
     const response = await request(getHttpServer(app))
-      .post("/register/establishment")
-      .send(makeRegisterEstablishmentPayload());
+      .post("/register/customer")
+      .send(makeRegisterCustomerPayload());
 
     expect(response.status).toBe(201);
 
-    const responseBody = registerEstablishmentResponseSchema.parse(
-      response.body,
-    );
+    const responseBody = registerCustomerResponseSchema.parse(response.body);
 
-    expect(responseBody.establishmentId).toEqual(expect.any(String));
+    expect(responseBody.customerId).toEqual(expect.any(String));
 
     const createdUser = await prisma.user.findUnique({
       where: {
@@ -125,44 +103,44 @@ describe("RegisterEstablishmentController (e2e)", () => {
       },
     });
 
-    const createdEstablishment = await prisma.establishment.findUnique({
+    const createdCustomer = await prisma.customer.findUnique({
       where: {
-        id: responseBody.establishmentId,
+        id: responseBody.customerId,
       },
     });
 
     expect(createdUser).not.toBeNull();
-    expect(createdUser?.role).toBe("ESTABLISHMENT");
-    expect(createdEstablishment).not.toBeNull();
-    expect(createdEstablishment?.slug).toBe("valid-establishment");
+    expect(createdUser?.role).toBe("CUSTOMER");
+    expect(createdCustomer).not.toBeNull();
+    expect(createdCustomer?.cpf).toBe("52998224725");
   });
 
-  it("should return 400 when sending an invalid establishment payload", async () => {
+  it("should return 400 when sending an invalid customer payload", async () => {
     const response = await request(getHttpServer(app))
-      .post("/register/establishment")
+      .post("/register/customer")
       .send({
-        ...makeRegisterEstablishmentPayload(),
-        cnpj: "05027115000191",
+        ...makeRegisterCustomerPayload(),
+        cpf: "111.111.111-11",
       });
 
     expect(response.status).toBe(400);
 
     const responseBody = singleMessageResponseSchema.parse(response.body);
 
-    expect(responseBody.message).toBe("Invalid CNPJ: 05027115000191");
+    expect(responseBody.message).toBe("Invalid CPF: 111.111.111-11");
 
     expect(await prisma.user.count()).toBe(0);
-    expect(await prisma.establishment.count()).toBe(0);
+    expect(await prisma.customer.count()).toBe(0);
   });
 
-  it("should return 400 when sending an incomplete establishment payload", async () => {
+  it("should return 400 when sending an incomplete customer payload", async () => {
     const incompletePayload = {
-      ...makeRegisterEstablishmentPayload(),
-      corporateName: undefined,
+      ...makeRegisterCustomerPayload(),
+      email: undefined,
     };
 
     const response = await request(getHttpServer(app))
-      .post("/register/establishment")
+      .post("/register/customer")
       .send(incompletePayload);
 
     expect(response.status).toBe(400);
@@ -173,31 +151,31 @@ describe("RegisterEstablishmentController (e2e)", () => {
       expect.arrayContaining([
         expect.objectContaining({
           code: "invalid_type",
-          path: "corporateName",
+          path: "email",
         }),
       ]),
     );
 
     expect(await prisma.user.count()).toBe(0);
-    expect(await prisma.establishment.count()).toBe(0);
+    expect(await prisma.customer.count()).toBe(0);
   });
 
-  it("should return 409 when trying to register an establishment with an email that already exists", async () => {
+  it("should return 409 when trying to register a customer with an email that already exists", async () => {
     const firstResponse = await request(getHttpServer(app))
-      .post("/register/establishment")
-      .send(makeRegisterEstablishmentPayload());
+      .post("/register/customer")
+      .send(makeRegisterCustomerPayload());
 
     expect(firstResponse.status).toBe(201);
 
     const response = await request(getHttpServer(app))
-      .post("/register/establishment")
-      .send(makeAnotherRegisterEstablishmentPayload());
+      .post("/register/customer")
+      .send(makeAnotherRegisterCustomerPayload());
 
     expect(response.status).toBe(409);
 
     const responseBody = singleMessageResponseSchema.parse(response.body);
 
-    expect(responseBody.message).toBe("Establishment already registered.");
+    expect(responseBody.message).toBe("Customer already registered.");
 
     expect(
       await prisma.user.count({
@@ -206,11 +184,11 @@ describe("RegisterEstablishmentController (e2e)", () => {
         },
       }),
     ).toBe(1);
-    expect(await prisma.establishment.count()).toBe(1);
+    expect(await prisma.customer.count()).toBe(1);
     expect(
-      await prisma.establishment.findUnique({
+      await prisma.customer.findUnique({
         where: {
-          cnpj: "41437902000177",
+          cpf: "11144477735",
         },
       }),
     ).toBeNull();
@@ -218,8 +196,8 @@ describe("RegisterEstablishmentController (e2e)", () => {
 
   it("should start each test with a clean database", async () => {
     const response = await request(getHttpServer(app))
-      .post("/register/establishment")
-      .send(makeRegisterEstablishmentPayload());
+      .post("/register/customer")
+      .send(makeRegisterCustomerPayload());
 
     expect(response.status).toBe(201);
   });
