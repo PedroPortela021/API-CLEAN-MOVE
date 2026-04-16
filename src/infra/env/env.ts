@@ -13,6 +13,18 @@ export const envSchema = z.object({
   POSTGRES_PASSWORD: z.string(),
   DATABASE_URL: z.url(),
   NODE_ENV: nodeEnvSchema.default("development"),
+  GOOGLE_CLIENT_ID: z.string().min(1).default("google-client-id"),
+  JWT_ISSUER: z.string().min(1).default("api-clean-move"),
+  JWT_ACCESS_TOKEN_SECRET: z
+    .string()
+    .min(32)
+    .default("access-secret-access-secret-access"),
+  JWT_REFRESH_TOKEN_SECRET: z
+    .string()
+    .min(32)
+    .default("refresh-secret-refresh-secret-123"),
+  JWT_ACCESS_TOKEN_EXPIRES_IN: z.string().min(1).default("15m"),
+  JWT_REFRESH_TOKEN_EXPIRES_IN: z.string().min(1).default("7d"),
 });
 
 export type NodeEnv = z.infer<typeof nodeEnvSchema>;
