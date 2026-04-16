@@ -1,7 +1,20 @@
 import { z } from "zod";
 import type { StringValue } from "ms";
 
-process.loadEnvFile();
+try {
+  process.loadEnvFile();
+} catch (error) {
+  // CI and containerized environments may inject vars without a local .env file.
+  const isMissingEnvFile =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT";
+
+  if (!isMissingEnvFile) {
+    throw error;
+  }
+}
 
 export const nodeEnvSchema = z.enum(["development", "test", "production"]);
 const jwtExpiresInSchema = z.custom<StringValue>(

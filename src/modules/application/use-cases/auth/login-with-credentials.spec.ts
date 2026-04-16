@@ -1,6 +1,7 @@
 import { JwtService } from "@nestjs/jwt";
 import { AuthService } from "../../../../infra/auth/auth.service";
-import { EnvService } from "../../../../infra/env/env.service";
+import type { Env } from "../../../../infra/env/env";
+import type { EnvService } from "../../../../infra/env/env.service";
 import { Email } from "../../../accounts/domain/value-objects/email";
 import { SessionCreationService } from "../../../accounts/domain/services/session-creation-service";
 import { InvalidCredentialsError } from "../../../../shared/errors/invalid-credentials-error";
@@ -12,27 +13,36 @@ import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-me
 import { LoginWithCredentialsUseCase } from "./login-with-credentials";
 
 const refreshTokenTtlInMs = 1_296_000_000;
+type EnvReader = {
+  get<T extends keyof Env>(key: T): Env[T];
+};
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemorySessionsRepository: InMemorySessionsRepository;
 let fakeHashComparer: FakeHashComparer;
 let fakeHashGenerator: FakeHashGenerator;
 let sessionCreationService: SessionCreationService;
-let envService: EnvService;
+let envService: EnvReader;
 let authService: AuthService;
 
 let sut: LoginWithCredentialsUseCase;
 
 describe("Login with credentials", () => {
   beforeEach(() => {
-    process.env.REFRESH_TOKEN_TTL_IN_MS = String(refreshTokenTtlInMs);
-
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemorySessionsRepository = new InMemorySessionsRepository();
     fakeHashComparer = new FakeHashComparer();
     fakeHashGenerator = new FakeHashGenerator();
     sessionCreationService = new SessionCreationService();
-    envService = new EnvService();
+    envService = {
+      get<T extends keyof Env>(key: T): Env[T] {
+        if (key === "REFRESH_TOKEN_TTL_IN_MS") {
+          return refreshTokenTtlInMs as Env[T];
+        }
+
+        throw new Error(`Unexpected env key requested: ${String(key)}`);
+      },
+    };
     authService = new AuthService(
       new JwtService({ secret: "test-access-secret" }),
     );
@@ -43,7 +53,7 @@ describe("Login with credentials", () => {
       fakeHashComparer,
       fakeHashGenerator,
       sessionCreationService,
-      envService,
+      envService as EnvService,
       authService,
     );
   });
