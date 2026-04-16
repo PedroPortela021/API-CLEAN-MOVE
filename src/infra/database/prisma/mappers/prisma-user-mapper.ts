@@ -2,7 +2,8 @@ import z from "zod";
 import {
   Prisma,
   User as PrismaUser,
-} from "../../../../generated/prisma/browser";
+  SocialAccount as PrismaSocialAccount,
+} from "../../../../generated/prisma/client";
 import { User } from "../../../../modules/accounts/domain/entities/user";
 import { Address } from "../../../../modules/accounts/domain/value-objects/address";
 import { Email } from "../../../../modules/accounts/domain/value-objects/email";
@@ -18,7 +19,9 @@ const addressSchema = z.object({
 });
 
 export class PrismaUserMapper {
-  static toDomain(raw: PrismaUser): User {
+  static toDomain(
+    raw: PrismaUser & { socialAccounts: PrismaSocialAccount[] },
+  ): User {
     const address =
       raw.address === null
         ? null
@@ -32,6 +35,10 @@ export class PrismaUserMapper {
         role: raw.role,
         phone: raw.phone ? Phone.create(raw.phone) : null,
         address,
+        socialAccounts: raw.socialAccounts.map((link) => ({
+          provider: link.provider,
+          subjectId: link.subjectId,
+        })),
         createdAt: raw.createdAt,
         updatedAt: raw.updatedAt,
       },
@@ -58,6 +65,12 @@ export class PrismaUserMapper {
       hashedPassword: raw.hashedPassword,
       role: raw.role,
       phone: raw.phone?.toString() ?? null,
+      socialAccounts: {
+        create: raw.socialAccounts.map((socialAccount) => ({
+          provider: socialAccount.provider,
+          subjectId: socialAccount.subjectId,
+        })),
+      },
       ...(address && { address }),
     };
   }
