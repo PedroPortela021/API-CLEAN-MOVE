@@ -1,12 +1,14 @@
 import { Global, Module } from "@nestjs/common";
 
+import { CustomersRepository } from "../../modules/application/repositories/customers-repository";
+import { EstablishmentsRepository } from "../../modules/application/repositories/establishment-repository";
+import { UnitOfWork } from "../../modules/application/repositories/unit-of-work";
+import { UsersRepository } from "../../modules/application/repositories/users-repository";
 import { EnvModule } from "../env/env.module";
 import { PrismaService } from "./prisma/prisma.service";
-import { EstablishmentsRepository } from "../../modules/application/repositories/establishment-repository";
 import { PrismaEstablishmentRepository } from "./prisma/repositories/prisma-establishments-repository";
-import { UsersRepository } from "../../modules/application/repositories/users-repository";
+import { PrismaCustomersRepository } from "./prisma/repositories/prisma-customers-repository";
 import { PrismaUsersRepository } from "./prisma/repositories/prisma-users-repository";
-import { UnitOfWork } from "../../modules/application/repositories/unit-of-work";
 import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
 
 @Global()
@@ -26,12 +28,17 @@ import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
       provide: UsersRepository,
       useClass: PrismaUsersRepository,
     },
+    {
+      provide: CustomersRepository,
+      useClass: PrismaCustomersRepository,
+    },
   ],
   exports: [
     PrismaService,
     UnitOfWork,
     EstablishmentsRepository,
     UsersRepository,
+    CustomersRepository,
   ],
 })
 export class DatabaseModule {}
