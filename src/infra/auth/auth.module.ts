@@ -15,6 +15,11 @@ import { JwtTokenService } from "./jwt-token.service";
     { provide: OAuthIdTokenVerifier, useClass: GoogleIdTokenVerifier },
     { provide: AuthTokenService, useClass: JwtTokenService },
   ],
-  exports: [HashGenerator, HashComparer, OAuthIdTokenVerifier, AuthTokenService],
+  exports: [
+    HashGenerator,
+    HashComparer,
+    OAuthIdTokenVerifier,
+    AuthTokenService,
+  ],
 })
 export class AuthModule {}

@@ -8,7 +8,10 @@ import {
   UsePipes,
 } from "@nestjs/common";
 import z from "zod";
-import { Email, InvalidEmailError } from "../../../modules/accounts/domain/value-objects/email";
+import {
+  Email,
+  InvalidEmailError,
+} from "../../../modules/accounts/domain/value-objects/email";
 import { AuthenticateWithOAuthUseCase } from "../../../modules/application/use-cases/auth/authenticate-with-oauth";
 import { OAuthEmailNotVerifiedError } from "../../../shared/errors/oauth-email-not-verified-error";
 import { Public } from "../../auth/public";

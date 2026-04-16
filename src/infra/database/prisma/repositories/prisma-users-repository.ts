@@ -47,7 +47,9 @@ export class PrismaUsersRepository implements UsersRepository {
 
   async findById(_userId: string): Promise<User | null> {
     try {
-      const user = await PrismaUnitOfWork.getClient(this.prisma).user.findUnique({
+      const user = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).user.findUnique({
         where: {
           id: _userId,
         },
@@ -69,19 +71,21 @@ export class PrismaUsersRepository implements UsersRepository {
     subjectId: string,
   ): Promise<User | null> {
     try {
-      const user = await PrismaUnitOfWork.getClient(this.prisma).user.findFirst({
-        where: {
-          socialAccounts: {
-            some: {
-              provider,
-              subjectId,
+      const user = await PrismaUnitOfWork.getClient(this.prisma).user.findFirst(
+        {
+          where: {
+            socialAccounts: {
+              some: {
+                provider,
+                subjectId,
+              },
             },
           },
+          include: {
+            socialAccounts: true,
+          },
         },
-        include: {
-          socialAccounts: true,
-        },
-      });
+      );
 
       if (!user) return null;
 

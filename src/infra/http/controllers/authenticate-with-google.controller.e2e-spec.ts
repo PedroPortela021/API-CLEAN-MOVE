@@ -2,7 +2,15 @@ import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import jwt from "jsonwebtoken";
 import request from "supertest";
-import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
+import {
+  afterAll,
+  beforeAll,
+  beforeEach,
+  describe,
+  expect,
+  it,
+  vi,
+} from "vitest";
 import z from "zod";
 import { AppModule } from "../../app.module";
 import { Prisma } from "../../../generated/prisma/client";
