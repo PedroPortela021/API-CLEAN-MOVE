@@ -8,3 +8,4 @@ coverage
 *.pdf
 /generated/prisma
 /src/generated/prisma
+.codex

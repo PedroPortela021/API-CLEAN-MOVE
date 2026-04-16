@@ -70,10 +70,12 @@ describe("LoginWithCredentialsController (e2e)", () => {
       .set("User-Agent", "Mozilla/5.0 Test Browser")
       .set("X-Forwarded-For", "198.51.100.10, 203.0.113.10")
       .send(makeLoginPayload());
-    const responseBody = loginWithCredentialsResponseSchema.parse(response.body);
-    const setCookieHeader = z.array(z.string()).parse(
-      response.headers["set-cookie"],
+    const responseBody = loginWithCredentialsResponseSchema.parse(
+      response.body,
     );
+    const setCookieHeader = z
+      .array(z.string())
+      .parse(response.headers["set-cookie"]);
     const refreshTokenCookie = setCookieHeader.find((cookie) =>
       cookie.startsWith("refresh_token="),
     );
@@ -118,10 +120,12 @@ describe("LoginWithCredentialsController (e2e)", () => {
       },
     });
 
-    const response = await request(getHttpServer(app)).post("/auth/login").send({
-      email: "johndoe@example.com",
-      password: "wrong-password",
-    });
+    const response = await request(getHttpServer(app))
+      .post("/auth/login")
+      .send({
+        email: "johndoe@example.com",
+        password: "wrong-password",
+      });
     const responseBody = singleMessageResponseSchema.parse(response.body);
 
     expect(response.status).toBe(400);

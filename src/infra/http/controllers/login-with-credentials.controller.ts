@@ -34,11 +34,7 @@ type ResponseCookieOptions = {
 };
 
 type ResponseLike = {
-  cookie(
-    name: string,
-    value: string,
-    options: ResponseCookieOptions,
-  ): void;
+  cookie(name: string, value: string, options: ResponseCookieOptions): void;
 };
 
 const loginWithCredentialsBodySchema = z.object({

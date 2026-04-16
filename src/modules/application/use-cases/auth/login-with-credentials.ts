@@ -83,7 +83,9 @@ export class LoginWithCredentialsUseCase {
 
     try {
       const refreshTokenHash = await this.hashGenerator.hash(refreshToken);
-      const refreshTokenTtlInMs = this.envService.get("REFRESH_TOKEN_TTL_IN_MS");
+      const refreshTokenTtlInMs = this.envService.get(
+        "REFRESH_TOKEN_TTL_IN_MS",
+      );
 
       session = this.sessionCreationService.execute({
         userId: user.id,
