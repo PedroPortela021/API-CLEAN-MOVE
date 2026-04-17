@@ -34,6 +34,7 @@ export const envSchema = z.object({
   POSTGRES_PASSWORD: z.string(),
   DATABASE_URL: z.url(),
   NODE_ENV: nodeEnvSchema.default("development"),
+  GOOGLE_CLIENT_ID: z.string().min(1).default("google-client-id"),
   JWT_ACCESS_SECRET: z.string().min(32),
   JWT_ACCESS_EXPIRES_IN: jwtExpiresInSchema.default("15m"),
   REFRESH_TOKEN_TTL_IN_MS: z.coerce.number().int().positive(),

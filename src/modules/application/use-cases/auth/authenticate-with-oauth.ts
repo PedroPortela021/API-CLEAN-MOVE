@@ -1,4 +1,5 @@
 import { User } from "../../../accounts/domain/entities/user";
+import { Injectable } from "@nestjs/common";
 import { Email } from "../../../accounts/domain/value-objects/email";
 import type { OAuthProvider } from "../../../accounts/domain/value-objects/oauth-provider";
 import { UserRole } from "../../../accounts/domain/value-objects/user-role";
@@ -20,6 +21,7 @@ type AuthenticateWithOAuthUseCaseResponse = Either<
   { user: User }
 >;
 
+@Injectable()
 export class AuthenticateWithOAuthUseCase {
   constructor(private usersRepository: UsersRepository) {}
 

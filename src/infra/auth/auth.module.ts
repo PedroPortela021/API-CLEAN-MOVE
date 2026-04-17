@@ -3,6 +3,8 @@ import { JwtModule, JwtModuleOptions } from "@nestjs/jwt";
 
 import { HashGenerator } from "../../modules/application/repositories/hash-generator";
 import { HashComparer } from "../../modules/application/repositories/hash-comparer";
+import { OAuthIdTokenVerifier } from "../../modules/application/services/oauth-id-token-verifier";
+import { GoogleIdTokenVerifier } from "./google-id-token-verifier";
 import { EnvModule } from "../env/env.module";
 import { EnvService } from "../env/env.service";
 import { BcryptHasher } from "./bcrypt-hasher";
@@ -27,7 +29,8 @@ import { AuthService } from "./auth.service";
     BcryptHasher,
     { provide: HashGenerator, useExisting: BcryptHasher },
     { provide: HashComparer, useExisting: BcryptHasher },
+    { provide: OAuthIdTokenVerifier, useClass: GoogleIdTokenVerifier },
   ],
-  exports: [AuthService, HashGenerator, HashComparer],
+  exports: [AuthService, HashGenerator, HashComparer, OAuthIdTokenVerifier],
 })
 export class AuthModule {}

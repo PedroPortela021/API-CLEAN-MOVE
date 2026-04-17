@@ -1,4 +1,5 @@
 import { Injectable } from "@nestjs/common";
+import { Prisma } from "../../../../generated/prisma/client";
 import { User } from "../../../../modules/accounts/domain/entities/user";
 import { OAuthProvider } from "../../../../modules/accounts/domain/value-objects/oauth-provider";
 import { UsersRepository } from "../../../../modules/application/repositories/users-repository";
@@ -31,6 +32,9 @@ export class PrismaUsersRepository implements UsersRepository {
         where: {
           email,
         },
+        include: {
+          socialAccounts: true,
+        },
       });
 
       if (!user) return null;
@@ -42,20 +46,96 @@ export class PrismaUsersRepository implements UsersRepository {
   }
 
   async findById(_userId: string): Promise<User | null> {
-    void _userId;
-    throw new Error();
+    try {
+      const user = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).user.findUnique({
+        where: {
+          id: _userId,
+        },
+        include: {
+          socialAccounts: true,
+        },
+      });
+
+      if (!user) return null;
+
+      return PrismaUserMapper.toDomain(user);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
 
   async findByProviderAndSubject(
-    _provider: OAuthProvider,
-    _subjectId: string,
+    provider: OAuthProvider,
+    subjectId: string,
   ): Promise<User | null> {
-    void _provider;
-    void _subjectId;
-    throw new Error();
+    try {
+      const user = await PrismaUnitOfWork.getClient(this.prisma).user.findFirst(
+        {
+          where: {
+            socialAccounts: {
+              some: {
+                provider,
+                subjectId,
+              },
+            },
+          },
+          include: {
+            socialAccounts: true,
+          },
+        },
+      );
+
+      if (!user) return null;
+
+      return PrismaUserMapper.toDomain(user);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
 
-  async save(_user: User): Promise<void> {
-    void _user;
+  async save(user: User): Promise<void> {
+    const address =
+      user.address === null
+        ? Prisma.JsonNull
+        : ({
+            street: user.address.street,
+            country: user.address.country,
+            state: user.address.state,
+            zipCode: user.address.zipCode,
+            city: user.address.city,
+          } satisfies Prisma.InputJsonObject);
+
+    try {
+      await PrismaUnitOfWork.getClient(this.prisma).$transaction([
+        PrismaUnitOfWork.getClient(this.prisma).socialAccount.deleteMany({
+          where: {
+            userId: user.id.toString(),
+          },
+        }),
+        PrismaUnitOfWork.getClient(this.prisma).user.update({
+          where: {
+            id: user.id.toString(),
+          },
+          data: {
+            name: user.name,
+            email: user.email.toString(),
+            hashedPassword: user.hashedPassword,
+            role: user.role,
+            phone: user.phone?.toString() ?? null,
+            address,
+            socialAccounts: {
+              create: user.socialAccounts.map((socialAccount) => ({
+                provider: socialAccount.provider,
+                subjectId: socialAccount.subjectId,
+              })),
+            },
+          },
+        }),
+      ]);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
 }
