@@ -1,3 +1,5 @@
+import { PrismaUserMapper } from "../../src/infra/database/prisma/mappers/prisma-user-mapper";
+import { PrismaService } from "../../src/infra/database/prisma/prisma.service";
 import {
   User,
   UserProps,
@@ -6,6 +8,7 @@ import { Address } from "../../src/modules/accounts/domain/value-objects/address
 import { Email } from "../../src/modules/accounts/domain/value-objects/email";
 import { Phone } from "../../src/modules/accounts/domain/value-objects/phone";
 import { UserRole } from "../../src/modules/accounts/domain/value-objects/user-role";
+import { HashGenerator } from "../../src/modules/application/repositories/hash-generator";
 import { UniqueEntityId } from "../../src/shared/entities/unique-entity-id";
 import {
   makeCity,
@@ -61,4 +64,45 @@ export function makeUser(
   );
 
   return user;
+}
+
+type MakePrismaUserOptions = {
+  role: UserRole;
+  plainPassword?: string | null;
+  override?: Omit<Partial<UserProps>, "hashedPassword">;
+  id?: UniqueEntityId;
+};
+
+export class UserFactory {
+  constructor(
+    private prisma: PrismaService,
+    private hashGenerator: HashGenerator,
+  ) {}
+
+  async makePrismaUser({
+    role,
+    plainPassword = makePassword(),
+    override,
+    id,
+  }: MakePrismaUserOptions) {
+    const hashedPassword =
+      plainPassword === null ? null : await this.hashGenerator.hash(plainPassword);
+    const user = makeUser(
+      role,
+      {
+        ...override,
+        hashedPassword,
+      },
+      id,
+    );
+
+    await this.prisma.user.create({
+      data: PrismaUserMapper.toPrisma(user),
+    });
+
+    return {
+      user,
+      plainPassword,
+    };
+  }
 }
