@@ -10,6 +10,8 @@ import { PrismaEstablishmentRepository } from "./prisma/repositories/prisma-esta
 import { PrismaCustomersRepository } from "./prisma/repositories/prisma-customers-repository";
 import { PrismaUsersRepository } from "./prisma/repositories/prisma-users-repository";
 import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
+import { SessionsRepository } from "../../modules/application/repositories/sessions-repository";
+import { PrismaSessionsRepository } from "./prisma/repositories/prisma-sessions-repository";
 
 @Global()
 @Module({
@@ -32,12 +34,17 @@ import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
       provide: CustomersRepository,
       useClass: PrismaCustomersRepository,
     },
+    {
+      provide: SessionsRepository,
+      useClass: PrismaSessionsRepository,
+    },
   ],
   exports: [
     PrismaService,
     UnitOfWork,
     EstablishmentsRepository,
     UsersRepository,
+    SessionsRepository,
     CustomersRepository,
   ],
 })

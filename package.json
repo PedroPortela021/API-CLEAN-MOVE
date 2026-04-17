@@ -58,6 +58,7 @@
   "dependencies": {
     "@nestjs/common": "^11.1.17",
     "@nestjs/core": "^11.1.17",
+    "@nestjs/jwt": "^11.0.2",
     "@nestjs/platform-express": "^11.1.17",
     "@prisma/adapter-pg": "^7.7.0",
     "@prisma/client": "^7.6.0",
