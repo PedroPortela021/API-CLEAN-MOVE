@@ -86,7 +86,9 @@ export class UserFactory {
     id,
   }: MakePrismaUserOptions) {
     const hashedPassword =
-      plainPassword === null ? null : await this.hashGenerator.hash(plainPassword);
+      plainPassword === null
+        ? null
+        : await this.hashGenerator.hash(plainPassword);
     const user = makeUser(
       role,
       {

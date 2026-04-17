@@ -2,7 +2,7 @@ import { INestApplication } from "@nestjs/common";
 import request from "supertest";
 import z from "zod";
 
-import { PrismaService } from "../../database/prisma/prisma.service";
+import { PrismaService } from "../../src/infra/database/prisma/prisma.service";
 
 export const authResponseSchema = z.object({
   userId: z.uuid(),

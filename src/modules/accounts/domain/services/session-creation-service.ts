@@ -44,14 +44,17 @@ export class SessionCreationService {
     const normalizedIpAddress = ipAddress?.trim() || null;
     const expiresAt = new Date(referenceDate.getTime() + ttlInMs);
 
-    return Session.create({
-      userId,
-      refreshTokenHash: normalizedRefreshTokenHash,
-      expiresAt,
-      createdAt: referenceDate,
-      updatedAt: referenceDate,
-      userAgent: normalizedUserAgent,
-      ipAddress: normalizedIpAddress,
-    }, id);
+    return Session.create(
+      {
+        userId,
+        refreshTokenHash: normalizedRefreshTokenHash,
+        expiresAt,
+        createdAt: referenceDate,
+        updatedAt: referenceDate,
+        userAgent: normalizedUserAgent,
+        ipAddress: normalizedIpAddress,
+      },
+      id,
+    );
   }
 }

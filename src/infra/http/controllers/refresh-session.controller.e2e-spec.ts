@@ -18,7 +18,7 @@ import {
   getHttpServer,
   loginUser,
   makeRefreshTokenCookieHeader,
-} from "./auth-session.e2e-helpers";
+} from "../../../../tests/helpers/auth-session.e2e-helpers";
 
 describe("RefreshSessionController (e2e)", () => {
   let app: INestApplication;

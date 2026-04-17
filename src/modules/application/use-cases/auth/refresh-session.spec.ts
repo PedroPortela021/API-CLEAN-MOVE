@@ -65,9 +65,8 @@ describe("RefreshSessionUseCase", () => {
       sub: user.id.toString(),
       sid: sessionId.toString(),
     });
-    const initialRefreshTokenHash = await fakeTokenHasher.hash(
-      initialRefreshToken,
-    );
+    const initialRefreshTokenHash =
+      await fakeTokenHasher.hash(initialRefreshToken);
     const session = sessionCreationService.execute({
       id: sessionId,
       userId: user.id,

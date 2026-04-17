@@ -81,11 +81,7 @@ export class RefreshSessionUseCase {
           this.envService.get("REFRESH_TOKEN_TTL_IN_MS"),
       );
 
-      session.rotateToken(
-        newRefreshTokenHash,
-        nextExpiration,
-        referenceDate,
-      );
+      session.rotateToken(newRefreshTokenHash, nextExpiration, referenceDate);
 
       await this.sessionsRepository.save(session);
 

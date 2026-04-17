@@ -78,7 +78,9 @@ describe("SignOutUseCase", () => {
     expect(result.isLeft()).toBe(true);
 
     if (result.isRight()) {
-      throw new Error("Expected sign-out to fail for a session from another user.");
+      throw new Error(
+        "Expected sign-out to fail for a session from another user.",
+      );
     }
 
     expect(result.value).toBeInstanceOf(ResourceNotFoundError);
