@@ -3,6 +3,7 @@ import { Session } from "../entities/session";
 import { InvalidSessionCreationError } from "../errors/invalid-session-creation-error";
 
 export type SessionCreationServiceRequest = {
+  id?: UniqueEntityId;
   userId: UniqueEntityId;
   refreshTokenHash: string;
   ttlInMs: number;
@@ -13,6 +14,7 @@ export type SessionCreationServiceRequest = {
 
 export class SessionCreationService {
   execute({
+    id,
     userId,
     refreshTokenHash,
     ttlInMs,
@@ -50,6 +52,6 @@ export class SessionCreationService {
       updatedAt: referenceDate,
       userAgent: normalizedUserAgent,
       ipAddress: normalizedIpAddress,
-    });
+    }, id);
   }
 }
