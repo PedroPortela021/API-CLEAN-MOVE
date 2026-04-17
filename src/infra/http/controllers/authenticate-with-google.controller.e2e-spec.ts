@@ -1,37 +1,27 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
-import jwt from "jsonwebtoken";
 import request from "supertest";
-import {
-  afterAll,
-  beforeAll,
-  beforeEach,
-  describe,
-  expect,
-  it,
-  vi,
-} from "vitest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import z from "zod";
 import { AppModule } from "../../app.module";
 import { Prisma } from "../../../generated/prisma/client";
 import { PrismaService } from "../../database/prisma/prisma.service";
+import {
+  OAuthIdTokenVerifier,
+  OAuthUserClaims,
+} from "../../../modules/application/services/oauth-id-token-verifier";
 import { GoogleIdTokenVerifier } from "../../auth/google-id-token-verifier";
 
-const authResponseSchema = z.object({
+const authenticateWithGoogleResponseSchema = z.object({
   accessToken: z.string().min(1),
-  refreshToken: z.string().min(1),
-  user: z.object({
-    id: z.uuid(),
-    role: z.enum(["CUSTOMER", "ESTABLISHMENT", "ADMIN"]),
-    profileComplete: z.boolean(),
-  }),
+  userId: z.uuid(),
 });
 
 const singleMessageResponseSchema = z.object({
   message: z.string(),
 });
 
-const ACCESS_SECRET = "access-secret-access-secret-access";
+const refreshTokenTtlInSeconds = 1_296_000;
 
 function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
   return app.getHttpServer() as Parameters<typeof request>[0];
@@ -40,62 +30,73 @@ function getHttpServer(app: INestApplication): Parameters<typeof request>[0] {
 describe("AuthenticateWithGoogleController (e2e)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
-
-  beforeAll(async () => {
-    vi.spyOn(
-      GoogleIdTokenVerifier.prototype,
-      "verifyGoogleIdToken",
-    ).mockImplementation(async (idToken: string) => {
+  const oauthIdTokenVerifierMock: OAuthIdTokenVerifier = {
+    verifyGoogleIdToken: async (idToken: string): Promise<OAuthUserClaims> => {
       if (idToken === "invalid-token") {
         throw new Error("Invalid OAuth token.");
       }
 
-      if (idToken === "unverified-email-token") {
-        return {
-          provider: "GOOGLE",
-          subjectId: "google-sub-unverified",
-          email: "unverified@example.com",
-          emailVerified: false,
-          name: "OAuth Unverified",
-        };
+      const claims = mockedClaimsByToken.get(idToken);
+
+      if (!claims) {
+        throw new Error("Invalid OAuth token.");
       }
 
-      if (idToken === "linked-account-token") {
-        return {
-          provider: "GOOGLE",
-          subjectId: "google-sub-linked",
-          email: "linked@example.com",
-          emailVerified: true,
-          name: "Linked User",
-        };
-      }
+      return claims;
+    },
+  };
+  const mockedClaimsByToken = new Map<string, OAuthUserClaims>([
+    [
+      "unverified-email-token",
+      {
+        provider: "GOOGLE",
+        subjectId: "google-sub-unverified",
+        email: "unverified@example.com",
+        emailVerified: false,
+        name: "OAuth Unverified",
+      },
+    ],
+    [
+      "linked-account-token",
+      {
+        provider: "GOOGLE",
+        subjectId: "google-sub-linked",
+        email: "linked@example.com",
+        emailVerified: true,
+        name: "Linked User",
+      },
+    ],
+    [
+      "link-by-email-token",
+      {
+        provider: "GOOGLE",
+        subjectId: "google-sub-by-email",
+        email: "email-match@example.com",
+        emailVerified: true,
+        name: "Email Match",
+      },
+    ],
+    [
+      "new-user-token",
+      {
+        provider: "GOOGLE",
+        subjectId: "google-sub-new",
+        email: "new-user@example.com",
+        emailVerified: true,
+        name: "New OAuth User",
+      },
+    ],
+  ]);
 
-      if (idToken === "link-by-email-token") {
-        return {
-          provider: "GOOGLE",
-          subjectId: "google-sub-by-email",
-          email: "email-match@example.com",
-          emailVerified: true,
-          name: "Email Match",
-        };
-      }
-
-      if (idToken === "new-user-token") {
-        return {
-          provider: "GOOGLE",
-          subjectId: "google-sub-new",
-          email: "new-user@example.com",
-          emailVerified: true,
-          name: "New OAuth User",
-        };
-      }
-
-      throw new Error("Invalid OAuth token.");
-    });
-
+  beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
       imports: [AppModule],
-    }).compile();
+    })
+      .overrideProvider(OAuthIdTokenVerifier)
+      .useValue(oauthIdTokenVerifierMock)
+      .overrideProvider(GoogleIdTokenVerifier)
+      .useValue(oauthIdTokenVerifierMock)
+      .compile();
 
     app = moduleRef.createNestApplication();
     await app.init();
@@ -103,12 +104,7 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
     prisma = moduleRef.get(PrismaService);
   });
 
-  beforeEach(() => {
-    vi.clearAllMocks();
-  });
-
   afterAll(async () => {
-    vi.restoreAllMocks();
     await app.close();
   });
 
@@ -131,23 +127,41 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
     });
 
     const response = await request(getHttpServer(app))
-      .post("/auth/oauth/google")
+      .post("/auth/google")
+      .set("User-Agent", "Mozilla/5.0 OAuth Browser")
+      .set("X-Forwarded-For", "198.51.100.20, 203.0.113.20")
       .send({ idToken: "linked-account-token" });
 
-    expect(response.status).toBe(201);
+    const responseBody = authenticateWithGoogleResponseSchema.parse(
+      response.body,
+    );
+    const setCookieHeader = z
+      .array(z.string())
+      .parse(response.headers["set-cookie"]);
+    const refreshTokenCookie = setCookieHeader.find((cookie) =>
+      cookie.startsWith("refresh_token="),
+    );
 
-    const responseBody = authResponseSchema.parse(response.body);
-    expect(responseBody.user.id).toBe(linkedUser.id);
+    expect(response.status).toBe(200);
+    expect(responseBody.userId).toBe(linkedUser.id);
+    expect(responseBody.accessToken).toEqual(expect.any(String));
+    expect("refreshToken" in responseBody).toBe(false);
+    expect(refreshTokenCookie).toBeDefined();
+    expect(refreshTokenCookie).toContain("HttpOnly");
+    expect(refreshTokenCookie).toContain("Path=/auth");
+    expect(refreshTokenCookie).toContain(`Max-Age=${refreshTokenTtlInSeconds}`);
+    expect(refreshTokenCookie).toContain("SameSite=Lax");
+    expect(refreshTokenCookie).not.toContain("Secure");
 
-    const verifiedToken = jwt.verify(responseBody.accessToken, ACCESS_SECRET, {
-      issuer: "api-clean-move",
+    const linkedSession = await prisma.session.findFirst({
+      where: {
+        userId: linkedUser.id,
+      },
     });
 
-    expect(typeof verifiedToken).toBe("object");
-    if (typeof verifiedToken === "string") {
-      throw new Error("Invalid token payload type.");
-    }
-    expect(verifiedToken.sub).toBe(linkedUser.id);
+    expect(linkedSession).not.toBeNull();
+    expect(linkedSession?.userAgent).toBe("Mozilla/5.0 OAuth Browser");
+    expect(linkedSession?.ipAddress).toBe("198.51.100.20");
   });
 
   it("should link social account when email already exists", async () => {
@@ -163,13 +177,15 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
     });
 
     const response = await request(getHttpServer(app))
-      .post("/auth/oauth/google")
+      .post("/auth/google")
       .send({ idToken: "link-by-email-token" });
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
 
-    const responseBody = authResponseSchema.parse(response.body);
-    expect(responseBody.user.id).toBe(existingUser.id);
+    const responseBody = authenticateWithGoogleResponseSchema.parse(
+      response.body,
+    );
+    expect(responseBody.userId).toBe(existingUser.id);
 
     const linkedAccount = await prisma.socialAccount.findUnique({
       where: {
@@ -186,16 +202,18 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
 
   it("should create a new incomplete user when account does not exist", async () => {
     const response = await request(getHttpServer(app))
-      .post("/auth/oauth/google")
+      .post("/auth/google")
       .send({ idToken: "new-user-token" });
 
-    expect(response.status).toBe(201);
+    expect(response.status).toBe(200);
 
-    const responseBody = authResponseSchema.parse(response.body);
+    const responseBody = authenticateWithGoogleResponseSchema.parse(
+      response.body,
+    );
 
     const createdUser = await prisma.user.findUnique({
       where: {
-        id: responseBody.user.id,
+        id: responseBody.userId,
       },
       include: {
         socialAccounts: true,
@@ -216,7 +234,7 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
 
   it("should return 400 when OAuth email is not verified", async () => {
     const response = await request(getHttpServer(app))
-      .post("/auth/oauth/google")
+      .post("/auth/google")
       .send({ idToken: "unverified-email-token" });
 
     expect(response.status).toBe(400);
@@ -227,7 +245,7 @@ describe("AuthenticateWithGoogleController (e2e)", () => {
 
   it("should return 401 when OAuth token is invalid", async () => {
     const response = await request(getHttpServer(app))
-      .post("/auth/oauth/google")
+      .post("/auth/google")
       .send({ idToken: "invalid-token" });
 
     expect(response.status).toBe(401);

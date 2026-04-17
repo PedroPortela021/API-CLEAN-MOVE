@@ -1,30 +1,65 @@
+import { randomBytes } from "node:crypto";
+import { Injectable } from "@nestjs/common";
 import { User } from "../../../accounts/domain/entities/user";
-import { Email } from "../../../accounts/domain/value-objects/email";
 import { Either, left, right } from "../../../../shared/either";
 import { InvalidCredentialsError } from "../../../../shared/errors/invalid-credentials-error";
 import { HashComparer } from "../../repositories/hash-comparer";
 import { UsersRepository } from "../../repositories/users-repository";
+import {
+  Email,
+  InvalidEmailError,
+} from "../../../accounts/domain/value-objects/email";
+import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
+import { SessionsRepository } from "../../repositories/sessions-repository";
+import { SessionCreationService } from "../../../accounts/domain/services/session-creation-service";
+import { Session } from "../../../accounts/domain/entities/session";
+import { InvalidSessionCreationError } from "../../../accounts/domain/errors/invalid-session-creation-error";
+import { HashGenerator } from "../../repositories/hash-generator";
+import { EnvService } from "../../../../infra/env/env.service";
+import { AuthService } from "../../../../infra/auth/auth.service";
 
 type LoginWithCredentialsUseCaseRequest = {
-  email: Email;
+  email: string;
   password: string;
+  userAgent?: string | null;
+  ipAddress?: string | null;
 };
 
 type LoginWithCredentialsUseCaseResponse = Either<
-  InvalidCredentialsError,
-  { user: User }
+  InvalidCredentialsError | UnexpectedDomainError | InvalidSessionCreationError,
+  { user: User; session: Session; refreshToken: string; accessToken: string }
 >;
 
+@Injectable()
 export class LoginWithCredentialsUseCase {
   constructor(
     private usersRepository: UsersRepository,
+    private sessionsRepository: SessionsRepository,
     private hashComparer: HashComparer,
+    private hashGenerator: HashGenerator,
+    private sessionCreationService: SessionCreationService,
+    private envService: EnvService,
+    private authService: AuthService,
   ) {}
 
   async execute({
-    email,
+    email: rawEmail,
     password,
+    userAgent,
+    ipAddress,
   }: LoginWithCredentialsUseCaseRequest): Promise<LoginWithCredentialsUseCaseResponse> {
+    let email: Email;
+
+    try {
+      email = new Email(rawEmail);
+    } catch (error) {
+      if (error instanceof InvalidEmailError) {
+        return left(new InvalidCredentialsError(error.message));
+      }
+
+      return left(new UnexpectedDomainError());
+    }
+
     const user = await this.usersRepository.findByEmail(email.toString());
 
     if (!user || user.hashedPassword === null) {
@@ -40,6 +75,42 @@ export class LoginWithCredentialsUseCase {
       return left(new InvalidCredentialsError());
     }
 
-    return right({ user });
+    const refreshToken = randomBytes(32).toString("base64url");
+    const referenceDate = new Date();
+
+    let session;
+    let accessToken;
+
+    try {
+      const refreshTokenHash = await this.hashGenerator.hash(refreshToken);
+      const refreshTokenTtlInMs = this.envService.get(
+        "REFRESH_TOKEN_TTL_IN_MS",
+      );
+
+      session = this.sessionCreationService.execute({
+        userId: user.id,
+        refreshTokenHash,
+        ttlInMs: refreshTokenTtlInMs,
+        referenceDate,
+        ipAddress: ipAddress ?? null,
+        userAgent: userAgent ?? null,
+      });
+
+      accessToken = await this.authService.generateAccessToken({
+        sub: user.id.toString(),
+        role: user.role,
+        sid: session.id.toString(),
+      });
+
+      await this.sessionsRepository.create(session);
+    } catch (error) {
+      if (error instanceof InvalidSessionCreationError) {
+        return left(new InvalidSessionCreationError(error.message));
+      }
+
+      return left(new UnexpectedDomainError());
+    }
+
+    return right({ user, session, refreshToken, accessToken });
   }
 }

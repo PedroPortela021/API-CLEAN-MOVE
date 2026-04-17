@@ -10,6 +10,11 @@ async function bootstrap(): Promise<void> {
   const envService = app.get(EnvService);
   const port = envService.get("PORT");
 
+  app.enableCors({
+    origin: envService.get("FRONTEND_URL"),
+    credentials: true,
+  });
+
   await app.listen(port);
 }
 

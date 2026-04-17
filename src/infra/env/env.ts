@@ -1,11 +1,32 @@
 import { z } from "zod";
+import type { StringValue } from "ms";
 
-process.loadEnvFile();
+try {
+  process.loadEnvFile();
+} catch (error) {
+  // CI and containerized environments may inject vars without a local .env file.
+  const isMissingEnvFile =
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "ENOENT";
+
+  if (!isMissingEnvFile) {
+    throw error;
+  }
+}
 
 export const nodeEnvSchema = z.enum(["development", "test", "production"]);
+const jwtExpiresInSchema = z.custom<StringValue>(
+  (value) => typeof value === "string" && value.trim().length > 0,
+  {
+    message: "JWT_ACCESS_EXPIRES_IN must be a valid ms-style duration string.",
+  },
+);
 
 export const envSchema = z.object({
   PORT: z.coerce.number().optional().default(3000),
+  FRONTEND_URL: z.url(),
   POSTGRES_HOST: z.string(),
   POSTGRES_PORT: z.coerce.number().optional().default(5432),
   POSTGRES_DB: z.string(),
@@ -14,17 +35,9 @@ export const envSchema = z.object({
   DATABASE_URL: z.url(),
   NODE_ENV: nodeEnvSchema.default("development"),
   GOOGLE_CLIENT_ID: z.string().min(1).default("google-client-id"),
-  JWT_ISSUER: z.string().min(1).default("api-clean-move"),
-  JWT_ACCESS_TOKEN_SECRET: z
-    .string()
-    .min(32)
-    .default("access-secret-access-secret-access"),
-  JWT_REFRESH_TOKEN_SECRET: z
-    .string()
-    .min(32)
-    .default("refresh-secret-refresh-secret-123"),
-  JWT_ACCESS_TOKEN_EXPIRES_IN: z.string().min(1).default("15m"),
-  JWT_REFRESH_TOKEN_EXPIRES_IN: z.string().min(1).default("7d"),
+  JWT_ACCESS_SECRET: z.string().min(32),
+  JWT_ACCESS_EXPIRES_IN: jwtExpiresInSchema.default("15m"),
+  REFRESH_TOKEN_TTL_IN_MS: z.coerce.number().int().positive(),
 });
 
 export type NodeEnv = z.infer<typeof nodeEnvSchema>;
