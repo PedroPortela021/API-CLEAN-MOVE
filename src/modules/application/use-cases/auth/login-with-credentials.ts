@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { Injectable } from "@nestjs/common";
 import { User } from "../../../accounts/domain/entities/user";
 import { Either, left, right } from "../../../../shared/either";
@@ -14,9 +13,10 @@ import { SessionsRepository } from "../../repositories/sessions-repository";
 import { SessionCreationService } from "../../../accounts/domain/services/session-creation-service";
 import { Session } from "../../../accounts/domain/entities/session";
 import { InvalidSessionCreationError } from "../../../accounts/domain/errors/invalid-session-creation-error";
-import { HashGenerator } from "../../repositories/hash-generator";
 import { EnvService } from "../../../../infra/env/env.service";
 import { AuthService } from "../../../../infra/auth/auth.service";
+import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
+import { TokenHasher } from "../../repositories/token-hasher";
 
 type LoginWithCredentialsUseCaseRequest = {
   email: string;
@@ -36,7 +36,7 @@ export class LoginWithCredentialsUseCase {
     private usersRepository: UsersRepository,
     private sessionsRepository: SessionsRepository,
     private hashComparer: HashComparer,
-    private hashGenerator: HashGenerator,
+    private tokenHasher: TokenHasher,
     private sessionCreationService: SessionCreationService,
     private envService: EnvService,
     private authService: AuthService,
@@ -75,19 +75,26 @@ export class LoginWithCredentialsUseCase {
       return left(new InvalidCredentialsError());
     }
 
-    const refreshToken = randomBytes(32).toString("base64url");
     const referenceDate = new Date();
 
     let session;
     let accessToken;
+    let refreshToken;
 
     try {
-      const refreshTokenHash = await this.hashGenerator.hash(refreshToken);
       const refreshTokenTtlInMs = this.envService.get(
         "REFRESH_TOKEN_TTL_IN_MS",
       );
+      const sessionId = new UniqueEntityId();
+
+      refreshToken = await this.authService.generateRefreshToken({
+        sub: user.id.toString(),
+        sid: sessionId.toString(),
+      });
+      const refreshTokenHash = await this.tokenHasher.hash(refreshToken);
 
       session = this.sessionCreationService.execute({
+        id: sessionId,
         userId: user.id,
         refreshTokenHash,
         ttlInMs: refreshTokenTtlInMs,
@@ -99,7 +106,7 @@ export class LoginWithCredentialsUseCase {
       accessToken = await this.authService.generateAccessToken({
         sub: user.id.toString(),
         role: user.role,
-        sid: session.id.toString(),
+        sid: sessionId.toString(),
       });
 
       await this.sessionsRepository.create(session);

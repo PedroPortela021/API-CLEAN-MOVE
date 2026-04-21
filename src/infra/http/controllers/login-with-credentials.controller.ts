@@ -11,11 +11,14 @@ import {
 } from "@nestjs/common";
 import z from "zod";
 import { Public } from "../../auth/public";
+import {
+  CookieResponseLike,
+  RefreshTokenCookieService,
+} from "../../auth/refresh-token-cookie.service";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { LoginWithCredentialsUseCase } from "../../../modules/application/use-cases/auth/login-with-credentials";
 import { InvalidCredentialsError } from "../../../shared/errors/invalid-credentials-error";
-import { EnvService } from "../../env/env.service";
 
 type RequestLike = {
   headers: Record<string, string | string[] | undefined>;
@@ -23,18 +26,6 @@ type RequestLike = {
   socket: {
     remoteAddress?: string | null;
   };
-};
-
-type ResponseCookieOptions = {
-  httpOnly: boolean;
-  path: string;
-  maxAge: number;
-  secure: boolean;
-  sameSite: "lax" | "none";
-};
-
-type ResponseLike = {
-  cookie(name: string, value: string, options: ResponseCookieOptions): void;
 };
 
 const loginWithCredentialsBodySchema = z.object({
@@ -51,7 +42,7 @@ type LoginWithCredentialsBodySchema = z.infer<
 export class LoginWithCredentialsController {
   constructor(
     private readonly loginWithCredentials: LoginWithCredentialsUseCase,
-    private readonly envService: EnvService,
+    private readonly refreshTokenCookieService: RefreshTokenCookieService,
   ) {}
 
   private getUserAgent(req: RequestLike): string | null {
@@ -91,7 +82,7 @@ export class LoginWithCredentialsController {
   async handle(
     @Body() body: LoginWithCredentialsBodySchema,
     @Req() req: RequestLike,
-    @Res({ passthrough: true }) res: ResponseLike,
+    @Res({ passthrough: true }) res: CookieResponseLike,
   ) {
     const result = await this.loginWithCredentials.execute({
       ...body,
@@ -112,15 +103,7 @@ export class LoginWithCredentialsController {
       }
     }
 
-    const isProduction = this.envService.get("NODE_ENV") === "production";
-
-    res.cookie("refresh_token", result.value.refreshToken, {
-      httpOnly: true,
-      path: "/auth",
-      maxAge: this.envService.get("REFRESH_TOKEN_TTL_IN_MS"),
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    });
+    this.refreshTokenCookieService.set(res, result.value.refreshToken);
 
     return {
       userId: result.value.user.id.toString(),

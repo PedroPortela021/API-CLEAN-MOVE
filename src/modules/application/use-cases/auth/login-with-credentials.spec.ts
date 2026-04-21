@@ -8,6 +8,7 @@ import { InvalidCredentialsError } from "../../../../shared/errors/invalid-crede
 import { makeUser } from "../../../../../tests/factories/user-factory";
 import { FakeHashComparer } from "../../../../../tests/repositories/fake-hash-comparer";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
+import { FakeTokenHasher } from "../../../../../tests/repositories/fake-token-hasher";
 import { InMemorySessionsRepository } from "../../../../../tests/repositories/in-memory-sessions-repository";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
 import { LoginWithCredentialsUseCase } from "./login-with-credentials";
@@ -21,6 +22,7 @@ let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemorySessionsRepository: InMemorySessionsRepository;
 let fakeHashComparer: FakeHashComparer;
 let fakeHashGenerator: FakeHashGenerator;
+let fakeTokenHasher: FakeTokenHasher;
 let sessionCreationService: SessionCreationService;
 let envService: EnvReader;
 let authService: AuthService;
@@ -33,6 +35,7 @@ describe("Login with credentials", () => {
     inMemorySessionsRepository = new InMemorySessionsRepository();
     fakeHashComparer = new FakeHashComparer();
     fakeHashGenerator = new FakeHashGenerator();
+    fakeTokenHasher = new FakeTokenHasher();
     sessionCreationService = new SessionCreationService();
     envService = {
       get<T extends keyof Env>(key: T): Env[T] {
@@ -40,18 +43,23 @@ describe("Login with credentials", () => {
           return refreshTokenTtlInMs as Env[T];
         }
 
+        if (key === "JWT_REFRESH_SECRET") {
+          return "test-refresh-secret-with-at-least-thirty-two-characters" as Env[T];
+        }
+
         throw new Error(`Unexpected env key requested: ${String(key)}`);
       },
     };
     authService = new AuthService(
       new JwtService({ secret: "test-access-secret" }),
+      envService as EnvService,
     );
 
     sut = new LoginWithCredentialsUseCase(
       inMemoryUsersRepository,
       inMemorySessionsRepository,
       fakeHashComparer,
-      fakeHashGenerator,
+      fakeTokenHasher,
       sessionCreationService,
       envService as EnvService,
       authService,
@@ -98,7 +106,7 @@ describe("Login with credentials", () => {
     expect(result.value.session).toBe(createdSession);
     expect(createdSession.userId.equals(user.id)).toBe(true);
     expect(createdSession.refreshTokenHash).toBe(
-      `${result.value.refreshToken}-hashed`,
+      `${result.value.refreshToken}-token-hashed`,
     );
     expect(createdSession.userAgent).toBe("Mozilla/5.0");
     expect(createdSession.ipAddress).toBe("127.0.0.1");
