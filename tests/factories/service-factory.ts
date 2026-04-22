@@ -7,6 +7,8 @@ import { EstimatedDuration } from "../../src/modules/catalog/domain/value-object
 import { Money } from "../../src/modules/catalog/domain/value-objects/money";
 import { ServiceName } from "../../src/modules/catalog/domain/value-objects/service-name";
 import { makeProductDescription, makeProductName } from "./random-data";
+import { PrismaService } from "../../src/infra/database/prisma/prisma.service";
+import { PrismaServiceMapper } from "../../src/infra/database/prisma/mappers/prisma-service-mapper";
 
 export function makeService(
   override?: Partial<ServiceProps>,
@@ -29,4 +31,21 @@ export function makeService(
   );
 
   return service;
+}
+
+export class ServiceFactory {
+  constructor(private prisma: PrismaService) {}
+
+  async makePrismaService(
+    override?: Partial<ServiceProps>,
+    id?: UniqueEntityId,
+  ) {
+    const service = makeService(override, id);
+
+    await this.prisma.service.create({
+      data: PrismaServiceMapper.toPrisma(service),
+    });
+
+    return service;
+  }
 }
