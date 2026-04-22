@@ -42,12 +42,63 @@ export class PrismaEstablishmentRepository implements EstablishmentsRepository {
   }
 
   async findById(id: string): Promise<Establishment | null> {
-    void id;
-    throw new Error();
+    try {
+      const establishment = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findUnique({
+        where: {
+          id,
+        },
+      });
+
+      if (!establishment) {
+        return null;
+      }
+
+      return PrismaEstablishmentMapper.toDomain(establishment);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
+
+  async findByOwnerId(ownerId: string): Promise<Establishment | null> {
+    try {
+      const establishment = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findUnique({
+        where: {
+          ownerId,
+        },
+      });
+
+      if (!establishment) {
+        return null;
+      }
+
+      return PrismaEstablishmentMapper.toDomain(establishment);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
+  }
+
   async findBySlug(slug: string): Promise<Establishment | null> {
-    void slug;
-    throw new Error();
+    try {
+      const establishment = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findUnique({
+        where: {
+          slug,
+        },
+      });
+
+      if (!establishment) {
+        return null;
+      }
+
+      return PrismaEstablishmentMapper.toDomain(establishment);
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
   async findBySlugOrCnpj(
     slug: string,
@@ -73,7 +124,36 @@ export class PrismaEstablishmentRepository implements EstablishmentsRepository {
     establishmentName?: string;
     serviceCategory?: ServiceCategory;
   }): Promise<Establishment[]> {
-    void filters;
-    throw new Error();
+    try {
+      const establishments = await PrismaUnitOfWork.getClient(
+        this.prisma,
+      ).establishment.findMany({
+        where: {
+          ...(filters?.establishmentName
+            ? {
+                corporateName: filters.establishmentName,
+              }
+            : {}),
+          ...(filters?.serviceCategory
+            ? {
+                services: {
+                  some: {
+                    category: filters.serviceCategory,
+                  },
+                },
+              }
+            : {}),
+        },
+        orderBy: {
+          corporateName: "asc",
+        },
+      });
+
+      return establishments.map((establishment) =>
+        PrismaEstablishmentMapper.toDomain(establishment),
+      );
+    } catch (error) {
+      rethrowPrismaRepositoryError(error);
+    }
   }
 }
