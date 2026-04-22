@@ -7,7 +7,6 @@ import {
   NotFoundException,
   Post,
   UnauthorizedException,
-  UsePipes,
 } from "@nestjs/common";
 import z from "zod";
 
@@ -22,6 +21,7 @@ import { Roles } from "../../auth/roles";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
+import { AppointmentPresenter } from "../presenters/appointment-presenter";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 
 const bookServiceBodySchema = z.object({
@@ -39,10 +39,10 @@ export class BookServiceController {
   constructor(private readonly bookService: BookServiceUseCase) {}
 
   @Post()
-  @UsePipes(new ZodValidationPipe(bookServiceBodySchema))
   async handle(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() body: BookServiceBodySchema,
+    @Body(new ZodValidationPipe(bookServiceBodySchema))
+    body: BookServiceBodySchema,
   ) {
     const result = await this.bookService.execute({
       establishmentOwnerId: user.userId,
@@ -77,7 +77,7 @@ export class BookServiceController {
     }
 
     return {
-      appointmentId: result.value.appointment.id.toString(),
+      appointment: AppointmentPresenter.toHTTP(result.value.appointment),
     };
   }
 }
