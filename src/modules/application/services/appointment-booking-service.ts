@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import { Either, left, right } from "../../../shared/either";
 import { UniqueEntityId } from "../../../shared/entities/unique-entity-id";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
@@ -32,7 +33,7 @@ export type AppointmentBookingServiceRequest = {
   serviceId: string;
   author: AppointmentAuthor;
   startsAt: Date;
-  reservationExpiresAt?: Date;
+  reservationExpiresAt?: Date | null;
 };
 
 export type AppointmentBookingServiceResponse = Either<
@@ -48,6 +49,7 @@ export type AppointmentBookingServiceResponse = Either<
   }
 >;
 
+@Injectable()
 export class AppointmentBookingService {
   constructor(
     private appointmentsRepository: AppointmentsRepository,
@@ -56,14 +58,18 @@ export class AppointmentBookingService {
     private servicesRepository: ServicesRepository,
   ) {}
 
-  async execute({
-    establishmentId,
-    customerId,
-    serviceId,
-    author,
-    startsAt,
-    reservationExpiresAt,
-  }: AppointmentBookingServiceRequest): Promise<AppointmentBookingServiceResponse> {
+  async execute(
+    params: AppointmentBookingServiceRequest,
+  ): Promise<AppointmentBookingServiceResponse> {
+    const {
+      establishmentId,
+      customerId,
+      serviceId,
+      author,
+      startsAt,
+      reservationExpiresAt,
+    } = params;
+
     if (
       !canBookAppointment({
         author,

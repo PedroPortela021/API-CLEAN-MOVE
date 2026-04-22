@@ -46,8 +46,11 @@ export function makeEstablishment(
 export class EstablishmentFactory {
   constructor(private prisma: PrismaService) {}
 
-  async makePrismaEstablishment(data?: Partial<EstablishmentProps>) {
-    const establishment = makeEstablishment(data);
+  async makePrismaEstablishment(
+    data?: Partial<EstablishmentProps>,
+    id?: UniqueEntityId,
+  ) {
+    const establishment = makeEstablishment(data, id);
 
     await this.prisma.establishment.create({
       data: PrismaEstablishmentMapper.toPrisma(establishment),

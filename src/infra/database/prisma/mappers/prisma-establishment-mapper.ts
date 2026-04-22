@@ -13,14 +13,17 @@ export class PrismaEstablishmentMapper {
   static toDomain(raw: PrismaEstablishment): Establishment {
     const operatingHours = operatingHoursSchema.parse(raw.operatingHours);
 
-    return Establishment.create({
-      ownerId: new UniqueEntityId(raw.ownerId),
-      corporateName: raw.corporateName,
-      socialReason: raw.socialReason,
-      cnpj: Cnpj.create(raw.cnpj),
-      operatingHours: OperatingHours.create(operatingHours),
-      slug: Slug.create(raw.slug),
-    });
+    return Establishment.create(
+      {
+        ownerId: new UniqueEntityId(raw.ownerId),
+        corporateName: raw.corporateName,
+        socialReason: raw.socialReason,
+        cnpj: Cnpj.create(raw.cnpj),
+        operatingHours: OperatingHours.create(operatingHours),
+        slug: Slug.create(raw.slug),
+      },
+      new UniqueEntityId(raw.id),
+    );
   }
 
   static toPrisma(
