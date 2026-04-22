@@ -1,13 +1,17 @@
 import { Global, Module } from "@nestjs/common";
 
+import { AppointmentsRepository } from "../../modules/application/repositories/appointments-repository";
 import { CustomersRepository } from "../../modules/application/repositories/customers-repository";
 import { EstablishmentsRepository } from "../../modules/application/repositories/establishment-repository";
+import { ServicesRepository } from "../../modules/application/repositories/services-repository";
 import { UnitOfWork } from "../../modules/application/repositories/unit-of-work";
 import { UsersRepository } from "../../modules/application/repositories/users-repository";
 import { EnvModule } from "../env/env.module";
+import { PrismaAppointmentsRepository } from "./prisma/repositories/prisma-appointments-repository";
 import { PrismaService } from "./prisma/prisma.service";
 import { PrismaEstablishmentRepository } from "./prisma/repositories/prisma-establishments-repository";
 import { PrismaCustomersRepository } from "./prisma/repositories/prisma-customers-repository";
+import { PrismaServicesRepository } from "./prisma/repositories/prisma-services-repository";
 import { PrismaUsersRepository } from "./prisma/repositories/prisma-users-repository";
 import { PrismaUnitOfWork } from "./prisma/prisma-unit-of-work";
 import { SessionsRepository } from "../../modules/application/repositories/sessions-repository";
@@ -35,6 +39,14 @@ import { PrismaSessionsRepository } from "./prisma/repositories/prisma-sessions-
       useClass: PrismaCustomersRepository,
     },
     {
+      provide: ServicesRepository,
+      useClass: PrismaServicesRepository,
+    },
+    {
+      provide: AppointmentsRepository,
+      useClass: PrismaAppointmentsRepository,
+    },
+    {
       provide: SessionsRepository,
       useClass: PrismaSessionsRepository,
     },
@@ -46,6 +58,8 @@ import { PrismaSessionsRepository } from "./prisma/repositories/prisma-sessions-
     UsersRepository,
     SessionsRepository,
     CustomersRepository,
+    ServicesRepository,
+    AppointmentsRepository,
   ],
 })
 export class DatabaseModule {}
