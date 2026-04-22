@@ -67,7 +67,7 @@ export const envSchema = z
 
     if (!isHttpsFrontend) {
       context.addIssue({
-        code: z.ZodIssueCode.custom,
+        code: "custom",
         path: ["FRONTEND_URL"],
         message: "FRONTEND_URL must use https:// when NODE_ENV=production.",
       });
