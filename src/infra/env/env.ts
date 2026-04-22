@@ -24,19 +24,29 @@ const jwtExpiresInSchema = z.custom<StringValue>(
     message: "JWT_ACCESS_EXPIRES_IN must be a valid ms-style duration string.",
   },
 );
-const databaseUrlSchema = z.url().refine(
-  (value) => value.startsWith("postgresql://") || value.startsWith("postgres://"),
-  {
-    message: "DATABASE_URL must use a PostgreSQL URL (postgresql:// or postgres://).",
-  },
-);
+const databaseUrlSchema = z
+  .url()
+  .refine(
+    (value) =>
+      value.startsWith("postgresql://") || value.startsWith("postgres://"),
+    {
+      message:
+        "DATABASE_URL must use a PostgreSQL URL (postgresql:// or postgres://).",
+    },
+  );
 
 export const envSchema = z
   .object({
     PORT: z.coerce.number().int().min(1).max(65535).optional().default(3000),
     FRONTEND_URL: z.url(),
     POSTGRES_HOST: nonEmptyStringSchema,
-    POSTGRES_PORT: z.coerce.number().int().min(1).max(65535).optional().default(5432),
+    POSTGRES_PORT: z.coerce
+      .number()
+      .int()
+      .min(1)
+      .max(65535)
+      .optional()
+      .default(5432),
     POSTGRES_DB: nonEmptyStringSchema,
     POSTGRES_USER: nonEmptyStringSchema,
     POSTGRES_PASSWORD: nonEmptyStringSchema,
