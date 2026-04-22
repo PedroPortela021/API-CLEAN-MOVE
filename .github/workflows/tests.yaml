@@ -6,10 +6,29 @@ permissions:
   contents: read
 
 jobs:
-  vitest:
-    name: Vitest Ubuntu
+  unit-tests:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+
+      - run: npm ci
+      - run: npm run prisma:generate
+      - run: npm test -- --passWithNoTests
+
+  e2e-tests:
+    name: E2E Tests
     runs-on: ubuntu-latest
     env:
+      POSTGRES_DB: api-clean-move
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api-clean-move
     steps:
       - uses: actions/checkout@v4
@@ -22,4 +41,33 @@ jobs:
       - run: npm ci
       - run: npm run prisma:generate
 
-      - run: npm test -- --passWithNoTests
+      - name: Create CI env file for Docker Compose
+        run: |
+          cat <<EOF > .env
+          POSTGRES_DB=${POSTGRES_DB}
+          POSTGRES_USER=${POSTGRES_USER}
+          POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+          POSTGRES_PORT=${POSTGRES_PORT}
+          DATABASE_URL=${DATABASE_URL}
+          EOF
+
+      - name: Start Postgres with Docker Compose
+        run: docker compose up -d postgres
+
+      - name: Wait for Postgres healthcheck
+        run: |
+          for i in {1..20}; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' clean-move-postgres)
+            if [ "$STATUS" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 3
+          done
+          docker compose logs postgres
+          exit 1
+
+      - run: npm run test:e2e
+
+      - name: Stop Docker Compose
+        if: always()
+        run: docker compose down -v
