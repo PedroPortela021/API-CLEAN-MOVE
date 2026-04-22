@@ -6,6 +6,7 @@ import { Establishment } from "../../establishments/domain/entities/establishmen
 export abstract class EstablishmentsRepository {
   abstract create(data: Establishment): Promise<void>;
   abstract findById(id: string): Promise<Establishment | null>;
+  abstract findByOwnerId(ownerId: string): Promise<Establishment | null>;
   abstract findByCnpj(cnpj: string): Promise<Establishment | null>;
   abstract findBySlug(slug: string): Promise<Establishment | null>;
   abstract findBySlugOrCnpj(
