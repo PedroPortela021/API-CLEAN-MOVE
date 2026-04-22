@@ -9,6 +9,20 @@ jobs:
   unit-tests:
     name: Unit Tests
     runs-on: ubuntu-latest
+    env:
+      NODE_ENV: test
+      FRONTEND_URL: http://localhost:5000
+      POSTGRES_HOST: localhost
+      POSTGRES_DB: api-clean-move
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_PORT: 5432
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/api-clean-move
+      JWT_ACCESS_SECRET: test-access-secret-with-at-least-32-chars
+      JWT_REFRESH_SECRET: test-refresh-secret-with-at-least-32-char
+      JWT_ACCESS_EXPIRES_IN: 15m
+      REFRESH_TOKEN_TTL_IN_MS: 1296000000
+      GOOGLE_CLIENT_ID: test-google-client-id
     steps:
       - uses: actions/checkout@v4
 
