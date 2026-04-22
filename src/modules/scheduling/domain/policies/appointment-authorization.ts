@@ -1,14 +1,10 @@
+import { UserRole } from "../../../accounts/domain/value-objects/user-role";
 import { Appointment } from "../entities/appointment";
 
-export type AppointmentAuthor =
-  | {
-      authorType: "CUSTOMER";
-      authorId: string;
-    }
-  | {
-      authorType: "ESTABLISHMENT";
-      authorId: string;
-    };
+export type AppointmentAuthor = {
+  authorType: UserRole;
+  authorId: string;
+};
 
 export function isAppointmentAuthor(
   appointment: Appointment,
