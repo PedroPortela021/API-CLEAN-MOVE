@@ -8,7 +8,7 @@ import { PasswordResetTokensRepository } from "../../repositories/password-reset
 import { ResetCodeGenerator } from "../../repositories/reset-code-generator";
 import { UsersRepository } from "../../repositories/users-repository";
 
-const DEFAULT_CODE_TTL_MS = 15 * 60 * 1000;
+const DEFAULT_TOKEN_TTL_MS = 15 * 60 * 1000;
 
 type RequestPasswordResetUseCaseRequest = {
   email: Email;
@@ -26,7 +26,7 @@ export class RequestPasswordResetUseCase {
     private hashGenerator: HashGenerator,
     private mailSender: MailSender,
     private resetCodeGenerator: ResetCodeGenerator,
-    private codeTtlMs: number = DEFAULT_CODE_TTL_MS,
+    private codeTtlMs: number = DEFAULT_TOKEN_TTL_MS,
   ) {}
 
   async execute({
@@ -38,8 +38,8 @@ export class RequestPasswordResetUseCase {
       return left(new ResourceNotFoundError({ resource: "user" }));
     }
 
-    const plainCode = this.resetCodeGenerator.generate();
-    const hashedCode = await this.hashGenerator.hash(plainCode);
+    const plainToken = this.resetCodeGenerator.generate();
+    const hashedCode = await this.hashGenerator.hash(plainToken);
     const now = new Date();
     const expiresAt = new Date(now.getTime() + this.codeTtlMs);
 
@@ -51,9 +51,9 @@ export class RequestPasswordResetUseCase {
 
     await this.passwordResetTokensRepository.upsert(token);
 
-    await this.mailSender.sendPasswordResetCode({
+    await this.mailSender.sendPasswordResetLink({
       to: user.email.getValue(),
-      code: plainCode,
+      token: plainToken,
     });
 
     return right(undefined);
