@@ -47,7 +47,7 @@ describe("Request password reset", () => {
     expect(fakeMailSender.sent).toHaveLength(0);
   });
 
-  it("should store hashed code and send plain code by email", async () => {
+  it("should store hashed token and send plain token by email", async () => {
     const user = makeUser("CUSTOMER", {
       email: new Email("john@example.com"),
     });
@@ -59,7 +59,7 @@ describe("Request password reset", () => {
 
     expect(result.isRight()).toBe(true);
     expect(fakeMailSender.sent).toEqual([
-      { to: "john@example.com", code: "123456" },
+      { to: "john@example.com", token: "123456" },
     ]);
     expect(inMemoryTokensRepository.items).toHaveLength(1);
     const token = inMemoryTokensRepository.items[0];
