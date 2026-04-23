@@ -10,6 +10,7 @@ import {
   UnauthorizedException,
   UsePipes,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import z from "zod";
 import { randomBytes } from "node:crypto";
 import {
@@ -56,6 +57,7 @@ type ResponseLike = {
   cookie(name: string, value: string, options: ResponseCookieOptions): void;
 };
 
+@ApiTags("auth")
 @Controller("/auth/google")
 @Public()
 export class AuthenticateWithGoogleController {

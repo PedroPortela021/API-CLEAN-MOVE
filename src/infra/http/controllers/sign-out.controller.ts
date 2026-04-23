@@ -5,6 +5,7 @@ import {
   Res,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { SignOutUseCase } from "../../../modules/application/use-cases/auth/sign-out";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { AuthenticatedUser } from "../../auth/authenticated-user";
@@ -14,6 +15,7 @@ import {
   RefreshTokenCookieService,
 } from "../../auth/refresh-token-cookie.service";
 
+@ApiTags("auth")
 @Controller("/auth")
 export class SignOutController {
   constructor(

@@ -8,6 +8,7 @@ import {
   Post,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import z from "zod";
 
 import { BookServiceUseCase } from "../../../modules/application/use-cases/appointment/book-service";
@@ -33,6 +34,7 @@ const bookServiceBodySchema = z.object({
 
 type BookServiceBodySchema = z.infer<typeof bookServiceBodySchema>;
 
+@ApiTags("appointment")
 @Controller("/appointment")
 @Roles(["ESTABLISHMENT"])
 export class BookServiceController {

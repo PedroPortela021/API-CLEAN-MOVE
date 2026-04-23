@@ -9,6 +9,7 @@ import {
   Res,
   UsePipes,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import z from "zod";
 import { Public } from "../../auth/public";
 import {
@@ -37,6 +38,7 @@ type LoginWithCredentialsBodySchema = z.infer<
   typeof loginWithCredentialsBodySchema
 >;
 
+@ApiTags("auth")
 @Controller("/auth")
 @Public()
 export class LoginWithCredentialsController {

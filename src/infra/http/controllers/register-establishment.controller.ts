@@ -7,6 +7,7 @@ import {
   Post,
   UsePipes,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import z from "zod";
 import { Public } from "../../auth/public";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
@@ -60,6 +61,7 @@ type RegisterEstablishmentBodySchema = z.infer<
   typeof registerEstablishmentBodySchema
 >;
 
+@ApiTags("register")
 @Controller("/register/establishment")
 @Public()
 export class RegisterEstablishmentController {

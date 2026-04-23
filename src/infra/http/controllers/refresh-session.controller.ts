@@ -7,6 +7,7 @@ import {
   Res,
   UnauthorizedException,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import { InvalidSessionError } from "../../../shared/errors/invalid-session-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { RefreshSessionUseCase } from "../../../modules/application/use-cases/auth/refresh-session";
@@ -20,6 +21,7 @@ type RequestLike = {
   headers: Record<string, string | string[] | undefined>;
 };
 
+@ApiTags("auth")
 @Controller("/auth")
 @Public()
 export class RefreshSessionController {

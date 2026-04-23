@@ -7,6 +7,7 @@ import {
   Post,
   UsePipes,
 } from "@nestjs/common";
+import { ApiTags } from "@nestjs/swagger";
 import z from "zod";
 
 import { RegisterCustomerUseCase } from "../../../modules/application/use-cases/customer/register-customer";
@@ -33,6 +34,7 @@ const registerCustomerBodySchema = z.object({
 
 type RegisterCustomerBodySchema = z.infer<typeof registerCustomerBodySchema>;
 
+@ApiTags("register")
 @Controller("/register/customer")
 @Public()
 export class RegisterCustomerController {
