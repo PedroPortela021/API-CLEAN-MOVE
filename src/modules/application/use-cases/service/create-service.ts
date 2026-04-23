@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
@@ -44,6 +45,7 @@ type CreateServiceUseCaseResponse = Either<
   }
 >;
 
+@Injectable()
 export class CreateServiceUseCase {
   constructor(
     private servicesRepository: ServicesRepository,

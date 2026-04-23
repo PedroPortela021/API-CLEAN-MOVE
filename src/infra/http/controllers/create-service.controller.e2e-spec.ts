@@ -1,126 +1,418 @@
-import {
-  BadRequestException,
-  Body,
-  ConflictException,
-  Controller,
-  InternalServerErrorException,
-  NotFoundException,
-  Post,
-  UnauthorizedException,
-} from "@nestjs/common";
-import {
-  ApiBadRequestResponse,
-  ApiBearerAuth,
-  ApiBody,
-  ApiConflictResponse,
-  ApiCreatedResponse,
-  ApiInternalServerErrorResponse,
-  ApiNotFoundResponse,
-  ApiOperation,
-  ApiTags,
-  ApiUnauthorizedResponse,
-} from "@nestjs/swagger";
+import { INestApplication } from "@nestjs/common";
+import { Test } from "@nestjs/testing";
+import request from "supertest";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import z from "zod";
 
-import { BookServiceUseCase } from "../../../modules/application/use-cases/appointment/book-service";
-import { InactiveServiceError } from "../../../modules/catalog/domain/errors/inactive-service-error";
-import { EstablishmentClosedError } from "../../../modules/establishments/domain/errors/establishment-closed-error";
-import { InvalidBookServiceInputError } from "../../../modules/scheduling/domain/errors/invalid-book-service-input-error";
-import { TimeSlotAlreadyBookedError } from "../../../modules/scheduling/domain/errors/time-slot-already-booked-error";
-import { AuthenticatedUser } from "../../auth/authenticated-user";
-import { CurrentUser } from "../../auth/current-user";
-import { Roles } from "../../auth/roles";
-import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
-import { NotAllowedError } from "../../../shared/errors/not-allowed-error";
-import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
-import { AppointmentPresenter } from "../presenters/appointment-presenter";
-import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
+import { EstablishmentFactory } from "../../../../tests/factories/establishment-factory";
+import { UserFactory } from "../../../../tests/factories/user-factory";
 import {
-  BookServiceBodyDto,
-  BookServiceResponseDto,
-} from "../docs/domain-swagger.dto";
+  getHttpServer,
+  loginUser,
+} from "../../../../tests/helpers/auth-session.e2e-helpers";
+import { expectSingleMessageResponseWithoutIssues } from "../../../../tests/helpers/http-response-assertions";
+import { HashGenerator } from "../../../modules/application/repositories/hash-generator";
+import { Cnpj } from "../../../modules/establishments/domain/value-objects/cnpj";
+import { AppModule } from "../../app.module";
+import { PrismaService } from "../../database/prisma/prisma.service";
 
-const bookServiceBodySchema = z.object({
-  customerId: z.uuid(),
-  serviceId: z.uuid(),
-  startsAt: z.coerce.date(),
-  reservationExpiresAt: z.union([z.coerce.date(), z.null()]).optional(),
+const serviceCategories = [
+  "WASH",
+  "SANITIZATION",
+  "AUTOMATIVE_DETAILING",
+  "PROTECTION",
+  "UPHOLSTERY",
+] as const;
+
+const serviceResponseSchema = z.object({
+  id: z.uuid(),
+  establishmentId: z.uuid(),
+  name: z.string().min(1),
+  description: z.string().min(1).nullable(),
+  category: z.enum(serviceCategories).nullable(),
+  estimatedDuration: z
+    .object({
+      minInMinutes: z.number().int().positive(),
+      maxInMinutes: z.number().int().positive().nullable(),
+    })
+    .nullable(),
+  priceInCents: z.number().int().nonnegative(),
+  isActive: z.boolean(),
+  createdAt: z.string().min(1).nullable(),
+  updatedAt: z.string().min(1).nullable(),
 });
 
-type BookServiceBodySchema = z.infer<typeof bookServiceBodySchema>;
+const createServiceResponseSchema = z.object({
+  service: serviceResponseSchema,
+});
 
-@ApiTags("appointment")
-@Controller("/appointment")
-@Roles(["ESTABLISHMENT"])
-export class BookServiceController {
-  constructor(private readonly bookService: BookServiceUseCase) {}
+const validationErrorResponseSchema = z.object({
+  statusCode: z.literal(400),
+  message: z.literal("Validation failed"),
+  error: z.literal("Bad Request"),
+  issues: z.array(
+    z.object({
+      code: z.string(),
+      message: z.string(),
+      path: z.string(),
+    }),
+  ),
+  parameter: z.null(),
+  target: z.literal("body"),
+});
 
-  @Post()
-  @ApiOperation({
-    summary: "Create an appointment for a customer and service.",
-  })
-  @ApiBearerAuth("access-token")
-  @ApiBody({ type: BookServiceBodyDto })
-  @ApiCreatedResponse({
-    description: "Appointment created successfully.",
-    type: BookServiceResponseDto,
-  })
-  @ApiBadRequestResponse({
-    description:
-      "Invalid payload, inactive service, establishment closed, or invalid appointment rules.",
-  })
-  @ApiUnauthorizedResponse({
-    description:
-      "Missing or invalid access token, or not allowed to book for this establishment.",
-  })
-  @ApiNotFoundResponse({
-    description: "Customer or service was not found.",
-  })
-  @ApiConflictResponse({
-    description: "The requested time slot is already booked.",
-  })
-  @ApiInternalServerErrorResponse({
-    description: "Unexpected failure while creating the appointment.",
-  })
-  async handle(
-    @CurrentUser() user: AuthenticatedUser,
-    @Body(new ZodValidationPipe(bookServiceBodySchema))
-    body: BookServiceBodySchema,
-  ) {
-    const result = await this.bookService.execute({
-      establishmentOwnerId: user.userId,
-      customerId: body.customerId,
-      serviceId: body.serviceId,
-      startsAt: body.startsAt,
-      reservationExpiresAt: body.reservationExpiresAt ?? null,
+function makeCreateServicePayload(
+  override?: Partial<{
+    serviceName: string;
+    description: string | undefined;
+    category: (typeof serviceCategories)[number] | undefined;
+    estimatedDuration:
+      | {
+          minInMinutes: number;
+          maxInMinutes?: number | null | undefined;
+        }
+      | undefined;
+    price: number;
+    isActive: boolean | undefined;
+    establishmentId: string | undefined;
+  }>,
+) {
+  return {
+    serviceName: "Lavagem premium",
+    description: "Lavagem externa com acabamento e brilho.",
+    category: "WASH" as const,
+    estimatedDuration: {
+      minInMinutes: 30,
+      maxInMinutes: 60,
+    },
+    price: 3000,
+    isActive: true,
+    ...override,
+  };
+}
+
+describe("CreateServiceController (e2e)", () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  let hashGenerator: HashGenerator;
+  let userFactory: UserFactory;
+  let establishmentFactory: EstablishmentFactory;
+
+  beforeAll(async () => {
+    const moduleRef = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleRef.createNestApplication();
+    await app.init();
+
+    prisma = moduleRef.get(PrismaService);
+    hashGenerator = moduleRef.get(HashGenerator);
+    userFactory = new UserFactory(prisma, hashGenerator);
+    establishmentFactory = new EstablishmentFactory(prisma);
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+
+  it("should return 401 when trying to create a service without an access token", async () => {
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .send(makeCreateServicePayload());
+
+    expect(response.status).toBe(401);
+    expectSingleMessageResponseWithoutIssues(
+      response.body,
+      "Missing access token.",
+    );
+    expect(await prisma.service.count()).toBe(0);
+  });
+
+  it("should return 403 when trying to create a service authenticated as a customer", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "CUSTOMER",
+      plainPassword: "strong-password",
+    });
+    const customerLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
     });
 
-    if (result.isLeft()) {
-      const error = result.value;
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${customerLogin.loginBody.accessToken}`)
+      .send(makeCreateServicePayload());
 
-      switch (error.constructor) {
-        case ResourceNotFoundError:
-          throw new NotFoundException(error.message);
-        case NotAllowedError:
-          throw new UnauthorizedException(error.message);
-        case InactiveServiceError:
-          throw new BadRequestException(error.message);
-        case EstablishmentClosedError:
-          throw new BadRequestException(error.message);
-        case TimeSlotAlreadyBookedError:
-          throw new ConflictException(error.message);
-        case InvalidBookServiceInputError:
-          throw new BadRequestException(error.message);
-        case UnexpectedDomainError:
-          throw new InternalServerErrorException(error.message);
+    expect(response.status).toBe(403);
+    expectSingleMessageResponseWithoutIssues(
+      response.body,
+      "Forbidden resource",
+    );
+    expect(await prisma.service.count()).toBe(0);
+  });
 
-        default:
-          throw new BadRequestException(error.message);
-      }
-    }
+  it("should return 404 when the authenticated establishment user has no establishment profile", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
 
-    return {
-      appointment: AppointmentPresenter.toHTTP(result.value.appointment),
-    };
-  }
-}
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send(makeCreateServicePayload());
+
+    expect(response.status).toBe(404);
+    expectSingleMessageResponseWithoutIssues(
+      response.body,
+      "Resource not found: Establishment.",
+    );
+    expect(await prisma.service.count()).toBe(0);
+  });
+
+  it("should create a service and persist the full payload for the authenticated establishment", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    const establishment = await establishmentFactory.makePrismaEstablishment({
+      ownerId: user.id,
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
+
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send(makeCreateServicePayload());
+    const responseBody = createServiceResponseSchema.parse(response.body);
+
+    expect(response.status).toBe(201);
+    expect(responseBody.service.establishmentId).toBe(
+      establishment.id.toString(),
+    );
+    expect(responseBody.service.name).toBe("Lavagem premium");
+    expect(responseBody.service.description).toBe(
+      "Lavagem externa com acabamento e brilho.",
+    );
+    expect(responseBody.service.category).toBe("WASH");
+    expect(responseBody.service.estimatedDuration).toEqual({
+      minInMinutes: 30,
+      maxInMinutes: 60,
+    });
+    expect(responseBody.service.priceInCents).toBe(3000);
+    expect(responseBody.service.isActive).toBe(true);
+
+    const createdService = await prisma.service.findUnique({
+      where: {
+        id: responseBody.service.id,
+      },
+    });
+
+    expect(createdService).not.toBeNull();
+    expect(createdService?.establishmentId).toBe(establishment.id.toString());
+    expect(createdService?.serviceName).toBe("Lavagem premium");
+    expect(createdService?.description).toBe(
+      "Lavagem externa com acabamento e brilho.",
+    );
+    expect(createdService?.category).toBe("WASH");
+    expect(createdService?.estimatedDurationMinInMinutes).toBe(30);
+    expect(createdService?.estimatedDurationMaxInMinutes).toBe(60);
+    expect(createdService?.priceInCents).toBe(3000);
+    expect(createdService?.isActive).toBe(true);
+  });
+
+  it("should ignore a forged establishmentId in the payload and create the service for the authenticated establishment", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    const { user: anotherUser } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    const authenticatedEstablishment =
+      await establishmentFactory.makePrismaEstablishment({
+        ownerId: user.id,
+      });
+    const anotherEstablishment = await establishmentFactory.makePrismaEstablishment({
+      ownerId: anotherUser.id,
+      cnpj: Cnpj.create("41437902000177"),
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
+
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send(
+        makeCreateServicePayload({
+          establishmentId: anotherEstablishment.id.toString(),
+        }),
+      );
+    const responseBody = createServiceResponseSchema.parse(response.body);
+
+    expect(response.status).toBe(201);
+    expect(responseBody.service.establishmentId).toBe(
+      authenticatedEstablishment.id.toString(),
+    );
+    expect(responseBody.service.establishmentId).not.toBe(
+      anotherEstablishment.id.toString(),
+    );
+
+    const createdService = await prisma.service.findUnique({
+      where: {
+        id: responseBody.service.id,
+      },
+    });
+
+    expect(createdService?.establishmentId).toBe(
+      authenticatedEstablishment.id.toString(),
+    );
+  });
+
+  it("should create a service without optional fields and persist null values in the response and database", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    const establishment = await establishmentFactory.makePrismaEstablishment({
+      ownerId: user.id,
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
+
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send(
+        makeCreateServicePayload({
+          description: undefined,
+          category: undefined,
+          estimatedDuration: undefined,
+        }),
+      );
+    const responseBody = createServiceResponseSchema.parse(response.body);
+
+    expect(response.status).toBe(201);
+    expect(responseBody.service.establishmentId).toBe(
+      establishment.id.toString(),
+    );
+    expect(responseBody.service.description).toBeNull();
+    expect(responseBody.service.category).toBeNull();
+    expect(responseBody.service.estimatedDuration).toBeNull();
+
+    const createdService = await prisma.service.findUnique({
+      where: {
+        id: responseBody.service.id,
+      },
+    });
+
+    expect(createdService).not.toBeNull();
+    expect(createdService?.description).toBeNull();
+    expect(createdService?.category).toBeNull();
+    expect(createdService?.estimatedDurationMinInMinutes).toBeNull();
+    expect(createdService?.estimatedDurationMaxInMinutes).toBeNull();
+  });
+
+  it("should return 400 when sending an incomplete service payload", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    await establishmentFactory.makePrismaEstablishment({
+      ownerId: user.id,
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
+
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send({
+        ...makeCreateServicePayload(),
+        serviceName: undefined,
+      });
+
+    expect(response.status).toBe(400);
+
+    const responseBody = validationErrorResponseSchema.parse(response.body);
+
+    expect(responseBody.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          code: "invalid_type",
+          path: "serviceName",
+        }),
+      ]),
+    );
+    expect(await prisma.service.count()).toBe(0);
+  });
+
+  it("should return 400 when estimatedDuration minInMinutes is greater than maxInMinutes", async () => {
+    const { user, plainPassword } = await userFactory.makePrismaUser({
+      role: "ESTABLISHMENT",
+      plainPassword: "strong-password",
+    });
+    await establishmentFactory.makePrismaEstablishment({
+      ownerId: user.id,
+    });
+    const establishmentLogin = await loginUser({
+      app,
+      prisma,
+      userId: user.id.toString(),
+      email: user.email.toString(),
+      password: plainPassword ?? "",
+    });
+
+    const response = await request(getHttpServer(app))
+      .post("/services")
+      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .send(
+        makeCreateServicePayload({
+          estimatedDuration: {
+            minInMinutes: 60,
+            maxInMinutes: 30,
+          },
+        }),
+      );
+
+    expect(response.status).toBe(400);
+    expectSingleMessageResponseWithoutIssues(
+      response.body,
+      "minInMinutes cannot be greater than maxInMinutes.",
+    );
+    expect(await prisma.service.count()).toBe(0);
+  });
+});
