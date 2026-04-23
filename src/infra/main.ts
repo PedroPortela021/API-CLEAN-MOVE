@@ -223,9 +223,15 @@ async function bootstrap(): Promise<void> {
     },
   });
 
-  await app.listen(port, "0.0.0.0", () =>
-    console.log("Swagger: http://localhost:3000/api"),
-  );
+  await app.listen(port, "0.0.0.0");
+
+  envService.get("NODE_ENV") === "development" &&
+    console.log(`
+    
+Swagger: http://localhost:3000/api
+    
+    
+    `);
 }
 
 void bootstrap();
