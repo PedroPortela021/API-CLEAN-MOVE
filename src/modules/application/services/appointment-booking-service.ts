@@ -103,7 +103,8 @@ export class AppointmentBookingService {
       return left(new InactiveServiceError(service.serviceName.value));
     }
 
-    const bookedDurationInMinutes = service.estimatedDuration?.upperBoundInMinutes;
+    const bookedDurationInMinutes =
+      service.estimatedDuration?.upperBoundInMinutes;
     const bookingDurationInMinutes =
       bookedDurationInMinutes ?? DEFAULT_APPOINTMENT_DURATION_IN_MINUTES;
 

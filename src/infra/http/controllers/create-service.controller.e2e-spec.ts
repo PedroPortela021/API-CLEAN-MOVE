@@ -170,7 +170,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send(makeCreateServicePayload());
 
     expect(response.status).toBe(404);
@@ -199,7 +202,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send(makeCreateServicePayload());
     const responseBody = createServiceResponseSchema.parse(response.body);
 
@@ -251,10 +257,11 @@ describe("CreateServiceController (e2e)", () => {
       await establishmentFactory.makePrismaEstablishment({
         ownerId: user.id,
       });
-    const anotherEstablishment = await establishmentFactory.makePrismaEstablishment({
-      ownerId: anotherUser.id,
-      cnpj: Cnpj.create("41437902000177"),
-    });
+    const anotherEstablishment =
+      await establishmentFactory.makePrismaEstablishment({
+        ownerId: anotherUser.id,
+        cnpj: Cnpj.create("41437902000177"),
+      });
     const establishmentLogin = await loginUser({
       app,
       prisma,
@@ -265,7 +272,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send(
         makeCreateServicePayload({
           establishmentId: anotherEstablishment.id.toString(),
@@ -310,7 +320,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send(
         makeCreateServicePayload({
           description: undefined,
@@ -359,7 +372,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send({
         ...makeCreateServicePayload(),
         serviceName: undefined,
@@ -398,7 +414,10 @@ describe("CreateServiceController (e2e)", () => {
 
     const response = await request(getHttpServer(app))
       .post("/services")
-      .set("Authorization", `Bearer ${establishmentLogin.loginBody.accessToken}`)
+      .set(
+        "Authorization",
+        `Bearer ${establishmentLogin.loginBody.accessToken}`,
+      )
       .send(
         makeCreateServicePayload({
           estimatedDuration: {

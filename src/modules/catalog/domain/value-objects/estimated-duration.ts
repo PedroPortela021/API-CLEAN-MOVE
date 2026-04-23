@@ -59,7 +59,9 @@ export class EstimatedDuration extends ValueObject<EstimatedDurationProps> {
   }
 
   get isRange() {
-    return this.maxInMinutes !== null && this.minInMinutes !== this.maxInMinutes;
+    return (
+      this.maxInMinutes !== null && this.minInMinutes !== this.maxInMinutes
+    );
   }
 
   get formatted() {
