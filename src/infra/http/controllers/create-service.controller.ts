@@ -6,7 +6,18 @@ import {
   NotFoundException,
   Post,
 } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import {
+  ApiBadRequestResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiCreatedResponse,
+  ApiForbiddenResponse,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import z from "zod";
 
 import { AuthenticatedUser } from "../../auth/authenticated-user";
@@ -19,6 +30,10 @@ import { InvalidServiceUpdateInputError } from "../../../modules/application/use
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { ServiceCategory } from "../../../modules/catalog/domain/value-objects/service-category";
 import { ServicePresenter } from "../presenters/service-presenter";
+import {
+  CreateServiceBodyDto,
+  CreateServiceResponseDto,
+} from "../docs/domain-swagger.dto";
 
 const serviceCategories = [
   "WASH",
@@ -44,13 +59,40 @@ const createServiceBodySchema = z.object({
 
 type CreateServiceBodySchema = z.infer<typeof createServiceBodySchema>;
 
-@ApiTags("appointment")
+@ApiTags("service")
 @Controller("/services")
 @Roles(["ESTABLISHMENT"])
 export class CreateServiceController {
   constructor(private readonly createService: CreateServiceUseCase) {}
 
   @Post()
+  @ApiOperation({
+    summary: "Create a service for the authenticated establishment.",
+  })
+  @ApiBearerAuth("access-token")
+  @ApiBody({ type: CreateServiceBodyDto })
+  @ApiCreatedResponse({
+    description: "Service created successfully.",
+    type: CreateServiceResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description:
+      "Invalid payload or invalid service data such as name, price, or estimated duration.",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Missing or invalid access token.",
+  })
+  @ApiForbiddenResponse({
+    description:
+      "Authenticated user does not have permission to create services.",
+  })
+  @ApiNotFoundResponse({
+    description:
+      "The authenticated establishment user does not have an establishment profile.",
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected failure while creating the service.",
+  })
   async handle(
     @CurrentUser() user: AuthenticatedUser,
     @Body(new ZodValidationPipe(createServiceBodySchema))
