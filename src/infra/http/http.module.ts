@@ -7,11 +7,13 @@ import { RefreshSessionUseCase } from "../../modules/application/use-cases/auth/
 import { SignOutUseCase } from "../../modules/application/use-cases/auth/sign-out";
 import { RegisterCustomerUseCase } from "../../modules/application/use-cases/customer/register-customer";
 import { RegisterEstablishmentUseCase } from "../../modules/application/use-cases/establishment/register-establishment";
+import { CreateServiceUseCase } from "../../modules/application/use-cases/service/create-service";
 import { SessionCreationService } from "../../modules/accounts/domain/services/session-creation-service";
 import { AuthModule } from "../auth/auth.module";
 import { DatabaseModule } from "../database/database.module";
 import { AuthenticateWithGoogleController } from "./controllers/authenticate-with-google.controller";
 import { BookServiceController } from "./controllers/book-service.controller";
+import { CreateServiceController } from "./controllers/create-service.controller";
 import { LoginWithCredentialsController } from "./controllers/login-with-credentials.controller";
 import { SignOutController } from "./controllers/sign-out.controller";
 import { RegisterCustomerController } from "./controllers/register-customer.controller";
@@ -28,11 +30,13 @@ import { RegisterEstablishmentController } from "./controllers/register-establis
     RefreshSessionController,
     SignOutController,
     BookServiceController,
+    CreateServiceController,
   ],
   providers: [
     RegisterEstablishmentUseCase,
     AuthenticateWithOAuthUseCase,
     BookServiceUseCase,
+    CreateServiceUseCase,
     LoginWithCredentialsUseCase,
     RefreshSessionUseCase,
     SignOutUseCase,
