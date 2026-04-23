@@ -5,7 +5,13 @@ import {
   Res,
   UnauthorizedException,
 } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import {
+  ApiBearerAuth,
+  ApiNoContentResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import { SignOutUseCase } from "../../../modules/application/use-cases/auth/sign-out";
 import { ResourceNotFoundError } from "../../../shared/errors/resource-not-found-error";
 import { AuthenticatedUser } from "../../auth/authenticated-user";
@@ -25,6 +31,14 @@ export class SignOutController {
 
   @Post("sign-out")
   @HttpCode(204)
+  @ApiOperation({ summary: "Revoke the current session and clear the refresh token cookie." })
+  @ApiBearerAuth("access-token")
+  @ApiNoContentResponse({
+    description: "Session revoked successfully.",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Missing or invalid access token, or session not found.",
+  })
   async handle(
     @CurrentUser() user: AuthenticatedUser,
     @Res({ passthrough: true }) res: CookieResponseLike,

@@ -7,7 +7,15 @@ import {
   Post,
   UsePipes,
 } from "@nestjs/common";
-import { ApiTags } from "@nestjs/swagger";
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiConflictResponse,
+  ApiCreatedResponse,
+  ApiInternalServerErrorResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import z from "zod";
 import { Public } from "../../auth/public";
 import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
@@ -15,6 +23,10 @@ import { RegisterEstablishmentUseCase } from "../../../modules/application/use-c
 import { InvalidRegisterEstablishmentInputError } from "../../../modules/establishments/domain/errors/invalid-register-establishment-input-error";
 import { ResourceAlreadyExistsError } from "../../../shared/errors/resource-already-exists-error";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
+import {
+  RegisterEstablishmentBodyDto,
+  RegisterEstablishmentResponseDto,
+} from "../docs/domain-swagger.dto";
 
 const timeRangeSchema = z.object({
   start: z.string().trim().min(1),
@@ -69,6 +81,21 @@ export class RegisterEstablishmentController {
 
   @Post()
   @UsePipes(new ZodValidationPipe(registerEstablishmentBodySchema))
+  @ApiOperation({ summary: "Register a new establishment account." })
+  @ApiBody({ type: RegisterEstablishmentBodyDto })
+  @ApiCreatedResponse({
+    description: "Establishment created successfully.",
+    type: RegisterEstablishmentResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid establishment registration payload.",
+  })
+  @ApiConflictResponse({
+    description: "An establishment with the provided unique data already exists.",
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected failure while creating the establishment.",
+  })
   async handle(@Body() body: RegisterEstablishmentBodySchema) {
     const result = await this.registerEstablishment.execute(body);
 
