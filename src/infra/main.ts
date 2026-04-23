@@ -20,6 +20,24 @@ async function bootstrap(): Promise<void> {
     .setTitle("API Clean Move")
     .setDescription("API documentation")
     .setVersion("1.0")
+    .addBearerAuth(
+      {
+        type: "http",
+        scheme: "bearer",
+        bearerFormat: "JWT",
+        description: "JWT access token used on protected routes.",
+      },
+      "access-token",
+    )
+    .addCookieAuth(
+      "refresh_token",
+      {
+        type: "apiKey",
+        in: "cookie",
+        description: "HttpOnly refresh token used to renew the session.",
+      },
+      "refresh-token",
+    )
     .addTag("auth", "Authentication and session management")
     .addTag("register", "Customer and establishment registration")
     .addTag("appointment", "Appointment management")
