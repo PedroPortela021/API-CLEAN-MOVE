@@ -36,7 +36,9 @@ type CreateServiceUseCaseRequest = {
 };
 
 type CreateServiceUseCaseResponse = Either<
-  ResourceNotFoundError | InvalidServiceUpdateInputError,
+  | ResourceNotFoundError
+  | InvalidServiceUpdateInputError
+  | UnexpectedDomainError,
   {
     service: Service;
   }
