@@ -56,7 +56,9 @@ export class BookServiceController {
   constructor(private readonly bookService: BookServiceUseCase) {}
 
   @Post()
-  @ApiOperation({ summary: "Create an appointment for a customer and service." })
+  @ApiOperation({
+    summary: "Create an appointment for a customer and service.",
+  })
   @ApiBearerAuth("access-token")
   @ApiBody({ type: BookServiceBodyDto })
   @ApiCreatedResponse({
@@ -68,7 +70,8 @@ export class BookServiceController {
       "Invalid payload, inactive service, establishment closed, or invalid appointment rules.",
   })
   @ApiUnauthorizedResponse({
-    description: "Missing or invalid access token, or not allowed to book for this establishment.",
+    description:
+      "Missing or invalid access token, or not allowed to book for this establishment.",
   })
   @ApiNotFoundResponse({
     description: "Customer or service was not found.",

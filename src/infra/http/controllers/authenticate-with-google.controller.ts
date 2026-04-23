@@ -89,7 +89,8 @@ export class AuthenticateWithGoogleController {
   @ApiOperation({ summary: "Authenticate with a Google ID token." })
   @ApiBody({ type: AuthenticateWithGoogleBodyDto })
   @ApiOkResponse({
-    description: "Authenticated successfully with Google and sets the refresh token cookie.",
+    description:
+      "Authenticated successfully with Google and sets the refresh token cookie.",
     type: AuthSuccessResponseDto,
   })
   @ApiBadRequestResponse({

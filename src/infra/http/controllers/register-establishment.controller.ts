@@ -91,7 +91,8 @@ export class RegisterEstablishmentController {
     description: "Invalid establishment registration payload.",
   })
   @ApiConflictResponse({
-    description: "An establishment with the provided unique data already exists.",
+    description:
+      "An establishment with the provided unique data already exists.",
   })
   @ApiInternalServerErrorResponse({
     description: "Unexpected failure while creating the establishment.",

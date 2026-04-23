@@ -31,7 +31,9 @@ export class SignOutController {
 
   @Post("sign-out")
   @HttpCode(204)
-  @ApiOperation({ summary: "Revoke the current session and clear the refresh token cookie." })
+  @ApiOperation({
+    summary: "Revoke the current session and clear the refresh token cookie.",
+  })
   @ApiBearerAuth("access-token")
   @ApiNoContentResponse({
     description: "Session revoked successfully.",

@@ -147,10 +147,7 @@ async function bootstrap(): Promise<void> {
             origin?: string;
           };
           ui?: {
-            preauthorizeApiKey?: (
-              schemeName: string,
-              value: string,
-            ) => void;
+            preauthorizeApiKey?: (schemeName: string, value: string) => void;
             authActions: {
               logout: (payload: string[]) => void;
             };
@@ -163,7 +160,9 @@ async function bootstrap(): Promise<void> {
 
         let parsedBody: { accessToken?: unknown } | undefined;
 
-        const parseJson = (value: unknown): { accessToken?: unknown } | undefined => {
+        const parseJson = (
+          value: unknown,
+        ): { accessToken?: unknown } | undefined => {
           if (typeof value === "string" && value.length > 0) {
             try {
               return JSON.parse(value) as {

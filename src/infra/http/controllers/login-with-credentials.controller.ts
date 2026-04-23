@@ -95,7 +95,8 @@ export class LoginWithCredentialsController {
   @ApiOperation({ summary: "Authenticate with email and password." })
   @ApiBody({ type: LoginWithCredentialsBodyDto })
   @ApiOkResponse({
-    description: "Authenticated successfully and sets the refresh token cookie.",
+    description:
+      "Authenticated successfully and sets the refresh token cookie.",
     type: AuthSuccessResponseDto,
   })
   @ApiBadRequestResponse({

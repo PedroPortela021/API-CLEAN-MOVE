@@ -40,10 +40,13 @@ export class RefreshSessionController {
 
   @Post("refresh")
   @HttpCode(200)
-  @ApiOperation({ summary: "Refresh the current session using the refresh token cookie." })
+  @ApiOperation({
+    summary: "Refresh the current session using the refresh token cookie.",
+  })
   @ApiCookieAuth("refresh-token")
   @ApiOkResponse({
-    description: "Session refreshed successfully and rotates the refresh token cookie.",
+    description:
+      "Session refreshed successfully and rotates the refresh token cookie.",
     type: AuthSuccessResponseDto,
   })
   @ApiUnauthorizedResponse({
