@@ -21,7 +21,7 @@ import { ServicesRepository } from "../../repositories/services-repository";
 import { InvalidServiceUpdateInputError } from "./update-service";
 
 type CreateServiceUseCaseRequest = {
-  establishmentId: string;
+  establishmentOwnerId: string;
   serviceName: string;
   description?: string | undefined;
   category?: ServiceCategory | undefined;
@@ -51,7 +51,7 @@ export class CreateServiceUseCase {
   ) {}
 
   async execute({
-    establishmentId,
+    establishmentOwnerId,
     serviceName,
     description,
     category,
@@ -60,7 +60,7 @@ export class CreateServiceUseCase {
     isActive = true,
   }: CreateServiceUseCaseRequest): Promise<CreateServiceUseCaseResponse> {
     const establishment =
-      await this.establishmentsRepository.findById(establishmentId);
+      await this.establishmentsRepository.findByOwnerId(establishmentOwnerId);
 
     if (!establishment) {
       return left(new ResourceNotFoundError({ resource: "Establishment" }));

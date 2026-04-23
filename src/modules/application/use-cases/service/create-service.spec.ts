@@ -28,7 +28,7 @@ describe("Create a service", () => {
     await inMemoryEstablishmentsRepository.create(establishment);
 
     const result = await sut.execute({
-      establishmentId: establishment.id.toString(),
+      establishmentOwnerId: establishment.ownerId.toString(),
       serviceName: "Lavagem simples",
       description:
         "Lavagem externa com lavadora de pressao, shampoo proprio e secagem com pano de microfibra.",
@@ -60,7 +60,7 @@ describe("Create a service", () => {
 
   it("should not be able to create a service for a non-existent establishment", async () => {
     const result = await sut.execute({
-      establishmentId: "non-existent-establishment",
+      establishmentOwnerId: "non-existent-establishment",
       serviceName: "Lavagem tecnica",
       description: "Lavagem detalhada",
       category: "WASH",
@@ -82,7 +82,7 @@ describe("Create a service", () => {
     await inMemoryEstablishmentsRepository.create(establishment);
 
     const result = await sut.execute({
-      establishmentId: establishment.id.toString(),
+      establishmentOwnerId: establishment.ownerId.toString(),
       serviceName: "Lavagem expressa",
       price: 2000,
     });
