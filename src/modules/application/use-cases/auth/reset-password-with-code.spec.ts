@@ -2,7 +2,6 @@ import { PasswordResetToken } from "../../../accounts/domain/entities/password-r
 import { Email } from "../../../accounts/domain/value-objects/email";
 import { InvalidOrExpiredPasswordResetCodeError } from "../../../../shared/errors/invalid-or-expired-password-reset-code-error";
 import { makeUser } from "../../../../../tests/factories/user-factory";
-import { FakeHashComparer } from "../../../../../tests/repositories/fake-hash-comparer";
 import { FakeHashGenerator } from "../../../../../tests/repositories/fake-hash-generator";
 import { InMemoryPasswordResetTokensRepository } from "../../../../../tests/repositories/in-memory-password-reset-tokens-repository";
 import { InMemoryUsersRepository } from "../../../../../tests/repositories/in-memory-users-repository";
@@ -10,30 +9,26 @@ import { ResetPasswordWithCodeUseCase } from "./reset-password-with-code";
 
 let inMemoryUsersRepository: InMemoryUsersRepository;
 let inMemoryTokensRepository: InMemoryPasswordResetTokensRepository;
-let fakeHashComparer: FakeHashComparer;
 let fakeHashGenerator: FakeHashGenerator;
 
 let sut: ResetPasswordWithCodeUseCase;
 
-describe("Reset password with code", () => {
+describe("Reset password with token", () => {
   beforeEach(() => {
     inMemoryUsersRepository = new InMemoryUsersRepository();
     inMemoryTokensRepository = new InMemoryPasswordResetTokensRepository();
-    fakeHashComparer = new FakeHashComparer();
     fakeHashGenerator = new FakeHashGenerator();
 
     sut = new ResetPasswordWithCodeUseCase(
       inMemoryUsersRepository,
       inMemoryTokensRepository,
-      fakeHashComparer,
       fakeHashGenerator,
     );
   });
 
-  it("should reject when email is unknown", async () => {
+  it("should reject when token is unknown", async () => {
     const result = await sut.execute({
-      email: new Email("nobody@example.com"),
-      code: "123456",
+      token: "123456",
       newPassword: "new-secret",
     });
 
@@ -51,8 +46,7 @@ describe("Reset password with code", () => {
     await inMemoryUsersRepository.create(user);
 
     const result = await sut.execute({
-      email: new Email("john@example.com"),
-      code: "123456",
+      token: "123456",
       newPassword: "new-secret",
     });
 
@@ -74,15 +68,14 @@ describe("Reset password with code", () => {
     await inMemoryTokensRepository.upsert(token);
 
     const result = await sut.execute({
-      email: new Email("john@example.com"),
-      code: "123456",
+      token: "123456",
       newPassword: "new-secret",
     });
 
     expect(result.isLeft()).toBe(true);
   });
 
-  it("should reject when code is wrong", async () => {
+  it("should reject when token is wrong", async () => {
     const user = makeUser("CUSTOMER", {
       email: new Email("john@example.com"),
     });
@@ -97,8 +90,7 @@ describe("Reset password with code", () => {
     await inMemoryTokensRepository.upsert(token);
 
     const result = await sut.execute({
-      email: new Email("john@example.com"),
-      code: "999999",
+      token: "999999",
       newPassword: "new-secret",
     });
 
@@ -121,8 +113,7 @@ describe("Reset password with code", () => {
     await inMemoryTokensRepository.upsert(token);
 
     const result = await sut.execute({
-      email: new Email("john@example.com"),
-      code: "123456",
+      token: "123456",
       newPassword: "new-secret",
     });
 
@@ -152,8 +143,7 @@ describe("Reset password with code", () => {
     await inMemoryTokensRepository.upsert(token);
 
     const result = await sut.execute({
-      email: new Email("oauth@example.com"),
-      code: "123456",
+      token: "123456",
       newPassword: "first-local",
     });
 
