@@ -161,11 +161,11 @@ export class AppointmentServiceDto {
   @ApiProperty({ example: "Corte de cabelo" })
   name!: string;
 
-  @ApiProperty({ example: "HAIR" })
-  category!: string;
+  @ApiProperty({ example: "HAIR", nullable: true })
+  category!: string | null;
 
-  @ApiProperty({ example: 45 })
-  durationInMinutes!: number;
+  @ApiProperty({ example: 45, nullable: true })
+  durationInMinutes!: number | null;
 
   @ApiProperty({ example: 7500 })
   priceInCents!: number;

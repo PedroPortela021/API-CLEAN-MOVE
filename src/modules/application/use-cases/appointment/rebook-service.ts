@@ -61,10 +61,12 @@ export class RebookServiceUseCase {
 
     let slot: TimeSlot;
     let endsAt: Date;
+    const durationInMinutes =
+      appointment.service.durationInMinutes ?? appointment.slot.durationInMinutes;
 
     try {
       endsAt = new Date(
-        startsAt.getTime() + appointment.service.durationInMinutes * 60 * 1000,
+        startsAt.getTime() + durationInMinutes * 60 * 1000,
       );
 
       slot = TimeSlot.create({

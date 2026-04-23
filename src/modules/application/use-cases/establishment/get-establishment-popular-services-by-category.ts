@@ -18,7 +18,7 @@ type GetEstablishmentPopularServicesByCategoryUseCaseRequest = {
 type PopularServiceByCategoryItem = {
   serviceId: string;
   serviceName: string;
-  category: string;
+  category: string | null;
   appointmentsCount: number;
   revenueInCents: number;
 };
@@ -92,7 +92,7 @@ export class GetEstablishmentPopularServicesByCategoryUseCase {
         groupedByService.set(serviceId, {
           serviceId,
           serviceName: appointment.service.serviceName,
-          category: serviceMeta.category,
+          category: serviceMeta.category ?? null,
           appointmentsCount: 1,
           revenueInCents: appointment.service.priceInCents,
         });

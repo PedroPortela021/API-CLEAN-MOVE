@@ -23,12 +23,14 @@ import { InvalidServiceUpdateInputError } from "./update-service";
 type CreateServiceUseCaseRequest = {
   establishmentId: string;
   serviceName: string;
-  description: string;
-  category: ServiceCategory;
-  estimatedDuration: {
-    minInMinutes: number;
-    maxInMinutes?: number;
-  };
+  description?: string | undefined;
+  category?: ServiceCategory | undefined;
+  estimatedDuration?:
+    | {
+        minInMinutes: number;
+        maxInMinutes?: number | null | undefined;
+      }
+    | undefined;
   price: number;
   isActive?: boolean;
 };
@@ -71,7 +73,9 @@ export class CreateServiceUseCase {
         description,
         category,
         price: Money.create(price),
-        estimatedDuration: EstimatedDuration.create(estimatedDuration),
+        estimatedDuration: estimatedDuration
+          ? EstimatedDuration.create(estimatedDuration)
+          : undefined,
         isActive,
       });
     } catch (error) {

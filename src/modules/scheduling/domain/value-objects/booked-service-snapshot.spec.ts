@@ -36,6 +36,17 @@ describe("BookedServiceSnapshot", () => {
     expect(snapshot.serviceName).toBe("Lavagem simples");
   });
 
+  it("should allow category and duration to be omitted", () => {
+    const snapshot = BookedServiceSnapshot.create({
+      serviceId: new UniqueEntityId(),
+      serviceName: "Lavagem simples",
+      priceInCents: 7500,
+    });
+
+    expect(snapshot.category).toBeUndefined();
+    expect(snapshot.durationInMinutes).toBeUndefined();
+  });
+
   it("should not allow an empty service name", () => {
     expect(() =>
       BookedServiceSnapshot.create({

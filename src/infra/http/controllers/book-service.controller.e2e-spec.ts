@@ -33,8 +33,8 @@ const appointmentResponseSchema = z.object({
   service: z.object({
     id: z.uuid(),
     name: z.string().min(1),
-    category: z.string().min(1),
-    durationInMinutes: z.number().int().positive(),
+    category: z.string().min(1).nullable(),
+    durationInMinutes: z.number().int().positive().nullable(),
     priceInCents: z.number().int().nonnegative(),
   }),
   slot: z.object({
@@ -323,8 +323,9 @@ describe("BookServiceController (e2e)", () => {
     expect(responseBody.appointment.service).toEqual({
       id: context.service.id.toString(),
       name: context.service.serviceName.value,
-      category: context.service.category,
-      durationInMinutes: context.service.estimatedDuration.maxInMinutes,
+      category: context.service.category ?? null,
+      durationInMinutes:
+        context.service.estimatedDuration?.upperBoundInMinutes ?? null,
       priceInCents: context.service.price.amountInCents,
     });
     expect(responseBody.appointment.slot.startsAt).toBe(

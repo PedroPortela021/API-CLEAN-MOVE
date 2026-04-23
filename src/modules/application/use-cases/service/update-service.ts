@@ -21,7 +21,7 @@ type UpdateServiceUseCaseRequest = {
     category?: ServiceCategory;
     estimatedDuration?: {
       minInMinutes: number;
-      maxInMinutes?: number;
+      maxInMinutes?: number | null | undefined;
     };
     price?: number;
   };

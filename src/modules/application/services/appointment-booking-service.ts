@@ -27,6 +27,8 @@ import { EstablishmentsRepository } from "../repositories/establishment-reposito
 import { ServicesRepository } from "../repositories/services-repository";
 import { InvalidAppointmentPaymentWindowError } from "../../scheduling/domain/errors/invalid-appointment-payment-window-error";
 
+const DEFAULT_APPOINTMENT_DURATION_IN_MINUTES = 60;
+
 export type AppointmentBookingServiceRequest = {
   establishmentId: string;
   customerId: string;
@@ -101,12 +103,16 @@ export class AppointmentBookingService {
       return left(new InactiveServiceError(service.serviceName.value));
     }
 
+    const bookedDurationInMinutes = service.estimatedDuration?.upperBoundInMinutes;
+    const bookingDurationInMinutes =
+      bookedDurationInMinutes ?? DEFAULT_APPOINTMENT_DURATION_IN_MINUTES;
+
     let slot: TimeSlot;
     let endsAt: Date;
 
     try {
       endsAt = new Date(
-        startsAt.getTime() + service.estimatedDuration.maxInMinutes * 60 * 1000,
+        startsAt.getTime() + bookingDurationInMinutes * 60 * 1000,
       );
 
       slot = TimeSlot.create({
@@ -163,7 +169,7 @@ export class AppointmentBookingService {
         establishmentId: new UniqueEntityId(establishmentId),
         service: BookedServiceSnapshot.create({
           category: service.category,
-          durationInMinutes: service.estimatedDuration.maxInMinutes,
+          durationInMinutes: bookedDurationInMinutes,
           priceInCents: service.price.amountInCents,
           serviceId: service.id,
           serviceName: service.serviceName.value,

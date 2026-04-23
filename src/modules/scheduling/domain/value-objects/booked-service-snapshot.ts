@@ -5,8 +5,8 @@ import { ServiceCategory } from "../../../catalog/domain/value-objects/service-c
 export type BookedServiceSnapshotProps = {
   serviceId: UniqueEntityId;
   serviceName: string;
-  category: ServiceCategory;
-  durationInMinutes: number;
+  category?: ServiceCategory | undefined;
+  durationInMinutes?: number | undefined;
   priceInCents: number;
 };
 
@@ -65,16 +65,18 @@ export class BookedServiceSnapshot extends ValueObject<BookedServiceSnapshotProp
       );
     }
 
-    if (!Number.isInteger(props.durationInMinutes)) {
-      throw new InvalidBookedServiceSnapshotError(
-        "durationInMinutes must be an integer.",
-      );
-    }
+    if (props.durationInMinutes !== undefined) {
+      if (!Number.isInteger(props.durationInMinutes)) {
+        throw new InvalidBookedServiceSnapshotError(
+          "durationInMinutes must be an integer.",
+        );
+      }
 
-    if (props.durationInMinutes <= 0) {
-      throw new InvalidBookedServiceSnapshotError(
-        "durationInMinutes must be greater than zero.",
-      );
+      if (props.durationInMinutes <= 0) {
+        throw new InvalidBookedServiceSnapshotError(
+          "durationInMinutes must be greater than zero.",
+        );
+      }
     }
 
     if (!Number.isInteger(props.priceInCents)) {

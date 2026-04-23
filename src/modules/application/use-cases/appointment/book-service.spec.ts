@@ -91,6 +91,73 @@ describe("Book service", () => {
     expect(appointmentsRepository.items).toHaveLength(0);
   });
 
+  it("should book a service even when it has no estimated duration", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+      estimatedDuration: undefined,
+    });
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.appointment.service.durationInMinutes).toBeUndefined();
+    expect(result.value.appointment.slot.durationInMinutes).toBe(60);
+    expect(appointmentsRepository.items).toHaveLength(1);
+  });
+
+  it("should book a service even when it has no category", async () => {
+    const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
+    const customer = makeCustomer({}, new UniqueEntityId("customer-1"));
+    const service = makeService({
+      establishmentId: establishment.id,
+      category: undefined,
+    });
+
+    await establishmentsRepository.create(establishment);
+    await customersRepository.create(customer);
+    await servicesRepository.create(service);
+
+    const result = await sut.execute({
+      establishmentId: establishment.id.toString(),
+      customerId: customer.id.toString(),
+      serviceId: service.id.toString(),
+      author: {
+        authorType: "CUSTOMER",
+        authorId: customer.id.toString(),
+      },
+      startsAt: new Date("2026-04-06T10:00:00"),
+    });
+
+    expect(result.isRight()).toBe(true);
+
+    if (result.isLeft()) {
+      throw result.value;
+    }
+
+    expect(result.value.appointment.service.category).toBeUndefined();
+    expect(appointmentsRepository.items).toHaveLength(1);
+  });
+
   it("should return a closed establishment error before looking up customer or appointments", async () => {
     const establishment = makeEstablishment({}, new UniqueEntityId("est-1"));
     const service = makeService({
