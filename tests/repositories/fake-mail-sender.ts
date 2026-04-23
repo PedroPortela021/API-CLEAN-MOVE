@@ -1,12 +1,12 @@
 import { MailSender } from "../../src/modules/application/gateways/mail-sender";
 
 export class FakeMailSender implements MailSender {
-  public readonly sent: { to: string; code: string }[] = [];
+  public readonly sent: { to: string; token: string }[] = [];
 
-  async sendPasswordResetCode(params: {
+  async sendPasswordResetLink(params: {
     to: string;
-    code: string;
+    token: string;
   }): Promise<void> {
-    this.sent.push({ to: params.to, code: params.code });
+    this.sent.push({ to: params.to, token: params.token });
   }
 }
