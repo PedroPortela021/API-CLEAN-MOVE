@@ -1,15 +1,12 @@
-import { Email } from "../../../accounts/domain/value-objects/email";
 import { Either, left, right } from "../../../../shared/either";
 import { InvalidOrExpiredPasswordResetCodeError } from "../../../../shared/errors/invalid-or-expired-password-reset-code-error";
 import { User } from "../../../accounts/domain/entities/user";
-import { HashComparer } from "../../repositories/hash-comparer";
 import { HashGenerator } from "../../repositories/hash-generator";
 import { PasswordResetTokensRepository } from "../../repositories/password-reset-tokens-repository";
 import { UsersRepository } from "../../repositories/users-repository";
 
 type ResetPasswordWithCodeUseCaseRequest = {
-  email: Email;
-  code: string;
+  token: string;
   newPassword: string;
 };
 
@@ -22,32 +19,26 @@ export class ResetPasswordWithCodeUseCase {
   constructor(
     private usersRepository: UsersRepository,
     private passwordResetTokensRepository: PasswordResetTokensRepository,
-    private hashComparer: HashComparer,
     private hashGenerator: HashGenerator,
   ) {}
 
   async execute({
-    email,
-    code,
+    token,
     newPassword,
   }: ResetPasswordWithCodeUseCaseRequest): Promise<ResetPasswordWithCodeUseCaseResponse> {
-    const user = await this.usersRepository.findByEmail(email.toString());
+    const hashedToken = await this.hashGenerator.hash(token);
+    const tokenEntity =
+      await this.passwordResetTokensRepository.findByHashedCode(hashedToken);
 
-    if (!user) {
+    if (!tokenEntity || tokenEntity.isExpired(new Date())) {
       return left(new InvalidOrExpiredPasswordResetCodeError());
     }
 
-    const token = await this.passwordResetTokensRepository.findByUserId(
-      user.id.toString(),
+    const user = await this.usersRepository.findById(
+      tokenEntity.userId.toString(),
     );
 
-    if (!token || token.isExpired(new Date())) {
-      return left(new InvalidOrExpiredPasswordResetCodeError());
-    }
-
-    const codeMatches = await this.hashComparer.compare(code, token.hashedCode);
-
-    if (!codeMatches) {
+    if (!user) {
       return left(new InvalidOrExpiredPasswordResetCodeError());
     }
 
