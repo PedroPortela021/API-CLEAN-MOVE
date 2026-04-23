@@ -17,7 +17,7 @@
     "check:all": "npm run build && npm run lint && npm run format && npm run typecheck && npm run test",
     "prisma:generate": "prisma generate",
     "start": "node dist/infra/main.js",
-    "start:dev": "ts-node src/infra/main.ts",
+    "start:dev": "node --watch -r ts-node/register src/infra/main.ts",
     "test": "vitest run --config vitest.config.mts",
     "test:e2e": "vitest run --config vitest.e2e.config.mts",
     "test:infra": "npm run test:e2e",
