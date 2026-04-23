@@ -1,6 +1,6 @@
 export abstract class MailSender {
-  abstract sendPasswordResetCode(params: {
+  abstract sendPasswordResetLink(params: {
     to: string;
-    code: string;
+    token: string;
   }): Promise<void>;
 }
