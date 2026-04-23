@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: api-clean-move
+    runtime: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm run start
