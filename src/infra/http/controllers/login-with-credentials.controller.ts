@@ -9,6 +9,14 @@ import {
   Res,
   UsePipes,
 } from "@nestjs/common";
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from "@nestjs/swagger";
 import z from "zod";
 import { Public } from "../../auth/public";
 import {
@@ -19,6 +27,10 @@ import { ZodValidationPipe } from "../pipes/zod-validation.pipe";
 import { UnexpectedDomainError } from "../../../shared/errors/unexpected-domain-error";
 import { LoginWithCredentialsUseCase } from "../../../modules/application/use-cases/auth/login-with-credentials";
 import { InvalidCredentialsError } from "../../../shared/errors/invalid-credentials-error";
+import {
+  AuthSuccessResponseDto,
+  LoginWithCredentialsBodyDto,
+} from "../docs/auth-swagger.dto";
 
 type RequestLike = {
   headers: Record<string, string | string[] | undefined>;
@@ -37,6 +49,7 @@ type LoginWithCredentialsBodySchema = z.infer<
   typeof loginWithCredentialsBodySchema
 >;
 
+@ApiTags("auth")
 @Controller("/auth")
 @Public()
 export class LoginWithCredentialsController {
@@ -79,6 +92,19 @@ export class LoginWithCredentialsController {
   @Post("login")
   @HttpCode(200)
   @UsePipes(new ZodValidationPipe(loginWithCredentialsBodySchema))
+  @ApiOperation({ summary: "Authenticate with email and password." })
+  @ApiBody({ type: LoginWithCredentialsBodyDto })
+  @ApiOkResponse({
+    description:
+      "Authenticated successfully and sets the refresh token cookie.",
+    type: AuthSuccessResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid credentials or invalid request payload.",
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected authentication failure.",
+  })
   async handle(
     @Body() body: LoginWithCredentialsBodySchema,
     @Req() req: RequestLike,

@@ -10,6 +10,15 @@ import {
   UnauthorizedException,
   UsePipes,
 } from "@nestjs/common";
+import {
+  ApiBadRequestResponse,
+  ApiBody,
+  ApiInternalServerErrorResponse,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+  ApiUnauthorizedResponse,
+} from "@nestjs/swagger";
 import z from "zod";
 import { randomBytes } from "node:crypto";
 import {
@@ -27,6 +36,10 @@ import { SessionsRepository } from "../../../modules/application/repositories/se
 import { EnvService } from "../../env/env.service";
 import { AuthService } from "../../auth/auth.service";
 import { InvalidSessionCreationError } from "../../../modules/accounts/domain/errors/invalid-session-creation-error";
+import {
+  AuthenticateWithGoogleBodyDto,
+  AuthSuccessResponseDto,
+} from "../docs/auth-swagger.dto";
 
 const authenticateWithGoogleBodySchema = z.object({
   idToken: z.string().trim().min(1),
@@ -56,6 +69,7 @@ type ResponseLike = {
   cookie(name: string, value: string, options: ResponseCookieOptions): void;
 };
 
+@ApiTags("auth")
 @Controller("/auth/google")
 @Public()
 export class AuthenticateWithGoogleController {
@@ -72,6 +86,22 @@ export class AuthenticateWithGoogleController {
   @Post()
   @HttpCode(200)
   @UsePipes(new ZodValidationPipe(authenticateWithGoogleBodySchema))
+  @ApiOperation({ summary: "Authenticate with a Google ID token." })
+  @ApiBody({ type: AuthenticateWithGoogleBodyDto })
+  @ApiOkResponse({
+    description:
+      "Authenticated successfully with Google and sets the refresh token cookie.",
+    type: AuthSuccessResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: "Invalid request payload or unverified Google email.",
+  })
+  @ApiUnauthorizedResponse({
+    description: "Invalid or expired Google ID token.",
+  })
+  @ApiInternalServerErrorResponse({
+    description: "Unexpected OAuth authentication failure.",
+  })
   async handle(
     @Body() body: AuthenticateWithGoogleBodySchema,
     @Req() req: RequestLike,
