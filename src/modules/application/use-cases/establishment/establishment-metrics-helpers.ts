@@ -78,7 +78,7 @@ export async function findAllAppointmentsByEstablishment(
 
 export function filterAppointmentsByMetrics(
   appointments: Awaited<ReturnType<typeof findAllAppointmentsByEstablishment>>,
-  servicesById: Map<string, ServiceCategory>,
+  servicesById: Map<string, ServiceCategory | undefined>,
   filters?: EstablishmentMetricsFilters,
 ) {
   return appointments.filter((appointment) => {

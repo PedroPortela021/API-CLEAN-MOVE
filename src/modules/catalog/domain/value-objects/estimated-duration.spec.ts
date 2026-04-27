@@ -22,7 +22,9 @@ describe("EstimatedDuration", () => {
     });
 
     expect(duration.minInMinutes).toBe(30);
-    expect(duration.maxInMinutes).toBe(30);
+    expect(duration.maxInMinutes).toBeNull();
+    expect(duration.upperBoundInMinutes).toBe(30);
+    expect(duration.averageInMinutes).toBe(30);
     expect(duration.formatted).toBe("30 min");
   });
 

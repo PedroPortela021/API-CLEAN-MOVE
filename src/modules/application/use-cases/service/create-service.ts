@@ -1,3 +1,4 @@
+import { Injectable } from "@nestjs/common";
 import { Either, left, right } from "../../../../shared/either";
 import { ResourceNotFoundError } from "../../../../shared/errors/resource-not-found-error";
 import { UnexpectedDomainError } from "../../../../shared/errors/unexpected-domain-error";
@@ -21,25 +22,30 @@ import { ServicesRepository } from "../../repositories/services-repository";
 import { InvalidServiceUpdateInputError } from "./update-service";
 
 type CreateServiceUseCaseRequest = {
-  establishmentId: string;
+  establishmentOwnerId: string;
   serviceName: string;
-  description: string;
-  category: ServiceCategory;
-  estimatedDuration: {
-    minInMinutes: number;
-    maxInMinutes?: number;
-  };
+  description?: string | undefined;
+  category?: ServiceCategory | undefined;
+  estimatedDuration?:
+    | {
+        minInMinutes: number;
+        maxInMinutes?: number | null | undefined;
+      }
+    | undefined;
   price: number;
   isActive?: boolean;
 };
 
 type CreateServiceUseCaseResponse = Either<
-  ResourceNotFoundError | InvalidServiceUpdateInputError,
+  | ResourceNotFoundError
+  | InvalidServiceUpdateInputError
+  | UnexpectedDomainError,
   {
     service: Service;
   }
 >;
 
+@Injectable()
 export class CreateServiceUseCase {
   constructor(
     private servicesRepository: ServicesRepository,
@@ -47,7 +53,7 @@ export class CreateServiceUseCase {
   ) {}
 
   async execute({
-    establishmentId,
+    establishmentOwnerId,
     serviceName,
     description,
     category,
@@ -56,7 +62,7 @@ export class CreateServiceUseCase {
     isActive = true,
   }: CreateServiceUseCaseRequest): Promise<CreateServiceUseCaseResponse> {
     const establishment =
-      await this.establishmentsRepository.findById(establishmentId);
+      await this.establishmentsRepository.findByOwnerId(establishmentOwnerId);
 
     if (!establishment) {
       return left(new ResourceNotFoundError({ resource: "Establishment" }));
@@ -71,7 +77,9 @@ export class CreateServiceUseCase {
         description,
         category,
         price: Money.create(price),
-        estimatedDuration: EstimatedDuration.create(estimatedDuration),
+        estimatedDuration: estimatedDuration
+          ? EstimatedDuration.create(estimatedDuration)
+          : undefined,
         isActive,
       });
     } catch (error) {

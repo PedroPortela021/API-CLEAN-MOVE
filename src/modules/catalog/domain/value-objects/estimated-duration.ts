@@ -2,7 +2,7 @@ import { ValueObject } from "../../../../shared/entities/value-object";
 
 type EstimatedDurationProps = {
   minInMinutes: number;
-  maxInMinutes: number;
+  maxInMinutes: number | null;
 };
 
 export class InvalidEstimatedDurationError extends Error {
@@ -19,15 +19,18 @@ export class EstimatedDuration extends ValueObject<EstimatedDurationProps> {
 
   static create(props: {
     minInMinutes: number;
-    maxInMinutes?: number;
+    maxInMinutes?: number | null | undefined;
   }): EstimatedDuration {
     const minInMinutes = props.minInMinutes;
-    const maxInMinutes = props.maxInMinutes ?? props.minInMinutes;
+    const maxInMinutes = props.maxInMinutes ?? null;
 
     this.validate(minInMinutes, "minInMinutes");
-    this.validate(maxInMinutes, "maxInMinutes");
 
-    if (minInMinutes > maxInMinutes) {
+    if (maxInMinutes !== null) {
+      this.validate(maxInMinutes, "maxInMinutes");
+    }
+
+    if (maxInMinutes !== null && minInMinutes > maxInMinutes) {
       throw new InvalidEstimatedDurationError(
         "minInMinutes cannot be greater than maxInMinutes.",
       );
@@ -47,12 +50,18 @@ export class EstimatedDuration extends ValueObject<EstimatedDurationProps> {
     return this.props.maxInMinutes;
   }
 
+  get upperBoundInMinutes() {
+    return this.maxInMinutes ?? this.minInMinutes;
+  }
+
   get averageInMinutes() {
-    return Math.round((this.minInMinutes + this.maxInMinutes) / 2);
+    return Math.round((this.minInMinutes + this.upperBoundInMinutes) / 2);
   }
 
   get isRange() {
-    return this.minInMinutes !== this.maxInMinutes;
+    return (
+      this.maxInMinutes !== null && this.minInMinutes !== this.maxInMinutes
+    );
   }
 
   get formatted() {
@@ -60,7 +69,7 @@ export class EstimatedDuration extends ValueObject<EstimatedDurationProps> {
       return `${this.minInMinutes} min`;
     }
 
-    return `${this.minInMinutes} - ${this.maxInMinutes} min`;
+    return `${this.minInMinutes} - ${this.upperBoundInMinutes} min`;
   }
 
   toString() {

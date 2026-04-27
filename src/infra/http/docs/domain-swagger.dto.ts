@@ -161,11 +161,11 @@ export class AppointmentServiceDto {
   @ApiProperty({ example: "Corte de cabelo" })
   name!: string;
 
-  @ApiProperty({ example: "HAIR" })
-  category!: string;
+  @ApiProperty({ example: "HAIR", nullable: true })
+  category!: string | null;
 
-  @ApiProperty({ example: 45 })
-  durationInMinutes!: number;
+  @ApiProperty({ example: 45, nullable: true })
+  durationInMinutes!: number | null;
 
   @ApiProperty({ example: 7500 })
   priceInCents!: number;
@@ -223,4 +223,142 @@ export class AppointmentDto {
 export class BookServiceResponseDto {
   @ApiProperty({ type: AppointmentDto })
   appointment!: AppointmentDto;
+}
+
+export class CreateServiceEstimatedDurationBodyDto {
+  @ApiProperty({
+    example: 30,
+    description: "Minimum estimated service duration in minutes.",
+  })
+  minInMinutes!: number;
+
+  @ApiPropertyOptional({
+    example: 60,
+    description: "Optional maximum estimated service duration in minutes.",
+  })
+  maxInMinutes?: number;
+}
+
+export class CreateServiceBodyDto {
+  @ApiProperty({
+    example: "Lavagem premium",
+    description: "Service name shown to customers.",
+  })
+  serviceName!: string;
+
+  @ApiPropertyOptional({
+    example: "Lavagem externa com acabamento e brilho.",
+    description: "Optional service description.",
+  })
+  description?: string;
+
+  @ApiPropertyOptional({
+    enum: [
+      "WASH",
+      "SANITIZATION",
+      "AUTOMATIVE_DETAILING",
+      "PROTECTION",
+      "UPHOLSTERY",
+    ],
+    example: "WASH",
+    description: "Optional category used to classify the service.",
+  })
+  category?:
+    | "WASH"
+    | "SANITIZATION"
+    | "AUTOMATIVE_DETAILING"
+    | "PROTECTION"
+    | "UPHOLSTERY";
+
+  @ApiPropertyOptional({
+    type: CreateServiceEstimatedDurationBodyDto,
+    description: "Optional estimated duration range for the service.",
+  })
+  estimatedDuration?: CreateServiceEstimatedDurationBodyDto;
+
+  @ApiProperty({
+    example: 3000,
+    description: "Service price in cents.",
+  })
+  price!: number;
+
+  @ApiPropertyOptional({
+    example: true,
+    description: "Whether the service is immediately available for booking.",
+  })
+  isActive?: boolean;
+}
+
+export class ServiceEstimatedDurationDto {
+  @ApiProperty({
+    example: 30,
+    description: "Minimum estimated duration in minutes.",
+  })
+  minInMinutes!: number;
+
+  @ApiProperty({
+    example: 60,
+    nullable: true,
+    description: "Maximum estimated duration in minutes when defined.",
+  })
+  maxInMinutes!: number | null;
+}
+
+export class ServiceDto {
+  @ApiProperty({ example: "11cf3860-d512-47db-b9d1-c9044be6250d" })
+  id!: string;
+
+  @ApiProperty({ example: "2e11b57c-b96a-490a-9ae6-64ef2966fd84" })
+  establishmentId!: string;
+
+  @ApiProperty({ example: "Lavagem premium" })
+  name!: string;
+
+  @ApiProperty({
+    example: "Lavagem externa com acabamento e brilho.",
+    nullable: true,
+  })
+  description!: string | null;
+
+  @ApiProperty({
+    enum: [
+      "WASH",
+      "SANITIZATION",
+      "AUTOMATIVE_DETAILING",
+      "PROTECTION",
+      "UPHOLSTERY",
+    ],
+    example: "WASH",
+    nullable: true,
+  })
+  category!:
+    | "WASH"
+    | "SANITIZATION"
+    | "AUTOMATIVE_DETAILING"
+    | "PROTECTION"
+    | "UPHOLSTERY"
+    | null;
+
+  @ApiProperty({
+    type: ServiceEstimatedDurationDto,
+    nullable: true,
+  })
+  estimatedDuration!: ServiceEstimatedDurationDto | null;
+
+  @ApiProperty({ example: 3000 })
+  priceInCents!: number;
+
+  @ApiProperty({ example: true })
+  isActive!: boolean;
+
+  @ApiProperty({ example: "2026-04-22T14:00:00.000Z", nullable: true })
+  createdAt!: string | null;
+
+  @ApiProperty({ example: "2026-04-22T14:05:00.000Z", nullable: true })
+  updatedAt!: string | null;
+}
+
+export class CreateServiceResponseDto {
+  @ApiProperty({ type: ServiceDto })
+  service!: ServiceDto;
 }

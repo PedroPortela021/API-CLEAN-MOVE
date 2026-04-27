@@ -10,16 +10,31 @@ import { UniqueEntityId } from "../../../../shared/entities/unique-entity-id";
 
 export class PrismaServiceMapper {
   static toDomain(raw: PrismaServiceRecord): Service {
+    const hasEstimatedDuration =
+      raw.estimatedDurationMinInMinutes !== null ||
+      raw.estimatedDurationMaxInMinutes !== null;
+
+    if (
+      raw.estimatedDurationMinInMinutes === null &&
+      raw.estimatedDurationMaxInMinutes !== null
+    ) {
+      throw new Error(
+        "Invalid service record: estimatedDurationMaxInMinutes requires estimatedDurationMinInMinutes.",
+      );
+    }
+
     return Service.create(
       {
         establishmentId: new UniqueEntityId(raw.establishmentId),
         serviceName: ServiceName.create(raw.serviceName),
-        description: raw.description,
-        category: raw.category,
-        estimatedDuration: EstimatedDuration.create({
-          minInMinutes: raw.estimatedDurationMinInMinutes,
-          maxInMinutes: raw.estimatedDurationMaxInMinutes,
-        }),
+        description: raw.description ?? undefined,
+        category: raw.category ?? undefined,
+        estimatedDuration: hasEstimatedDuration
+          ? EstimatedDuration.create({
+              minInMinutes: raw.estimatedDurationMinInMinutes!,
+              maxInMinutes: raw.estimatedDurationMaxInMinutes,
+            })
+          : undefined,
         price: Money.create(raw.priceInCents),
         isActive: raw.isActive,
         createdAt: raw.createdAt,
@@ -34,10 +49,12 @@ export class PrismaServiceMapper {
       id: raw.id.toString(),
       establishmentId: raw.establishmentId.toString(),
       serviceName: raw.serviceName.value,
-      description: raw.description,
-      category: raw.category,
-      estimatedDurationMinInMinutes: raw.estimatedDuration.minInMinutes,
-      estimatedDurationMaxInMinutes: raw.estimatedDuration.maxInMinutes,
+      description: raw.description ?? null,
+      category: raw.category ?? null,
+      estimatedDurationMinInMinutes:
+        raw.estimatedDuration?.minInMinutes ?? null,
+      estimatedDurationMaxInMinutes:
+        raw.estimatedDuration?.maxInMinutes ?? null,
       priceInCents: raw.price.amountInCents,
       isActive: raw.isActive,
       ...(raw.createdAt ? { createdAt: raw.createdAt } : {}),
@@ -48,10 +65,12 @@ export class PrismaServiceMapper {
   static toPrismaUpdate(raw: Service): Prisma.ServiceUncheckedUpdateInput {
     return {
       serviceName: raw.serviceName.value,
-      description: raw.description,
-      category: raw.category,
-      estimatedDurationMinInMinutes: raw.estimatedDuration.minInMinutes,
-      estimatedDurationMaxInMinutes: raw.estimatedDuration.maxInMinutes,
+      description: raw.description ?? null,
+      category: raw.category ?? null,
+      estimatedDurationMinInMinutes:
+        raw.estimatedDuration?.minInMinutes ?? null,
+      estimatedDurationMaxInMinutes:
+        raw.estimatedDuration?.maxInMinutes ?? null,
       priceInCents: raw.price.amountInCents,
       isActive: raw.isActive,
       ...(raw.updatedAt ? { updatedAt: raw.updatedAt } : {}),

@@ -79,9 +79,9 @@ describe("Update a service", () => {
     expect(resultService.price.amountInCents).toBe(50000);
     expect(resultService.category).toBe("PROTECTION");
     expect(resultService.description).toBe("Service updated description");
-    expect(resultService.estimatedDuration.minInMinutes).toBe(50);
-    expect(resultService.estimatedDuration.maxInMinutes).toBe(100);
-    expect(resultService.estimatedDuration.formatted).toBe("50 - 100 min");
+    expect(resultService.estimatedDuration?.minInMinutes).toBe(50);
+    expect(resultService.estimatedDuration?.maxInMinutes).toBe(100);
+    expect(resultService.estimatedDuration?.formatted).toBe("50 - 100 min");
   });
   it("should not be able to update a service with a valid establishment and invalid estimatedDuration", async () => {
     const establishment = makeEstablishment();
@@ -122,7 +122,7 @@ describe("Update a service", () => {
         originalUpdatedAt,
     ).toBe(true);
     expect(
-      inMemoryServicesRepository.items[0]?.estimatedDuration.formatted,
+      inMemoryServicesRepository.items[0]?.estimatedDuration?.formatted,
     ).toEqual("10 - 30 min");
     expect(inMemoryServicesRepository.items[0]?.serviceName.value).toEqual(
       "Service to update",
@@ -233,10 +233,10 @@ describe("Update a service", () => {
         serviceName: "Service to update with same name",
         category: "WASH",
         description: "Same description",
-        estimatedDuration: EstimatedDuration.create({
+        estimatedDuration: {
           minInMinutes: 10,
           maxInMinutes: 20,
-        }),
+        },
         price: 3000,
       },
     });
@@ -276,10 +276,10 @@ describe("Update a service", () => {
         serviceName: "Updated service by a customer",
         category: "WASH",
         description: "Updated service description",
-        estimatedDuration: EstimatedDuration.create({
+        estimatedDuration: {
           minInMinutes: 10,
           maxInMinutes: 20,
-        }),
+        },
         price: 3000,
       },
     });

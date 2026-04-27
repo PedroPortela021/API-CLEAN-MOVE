@@ -10,9 +10,9 @@ import { ServiceName } from "../value-objects/service-name";
 export type ServiceProps = {
   establishmentId: UniqueEntityId;
   serviceName: ServiceName;
-  description: string;
-  category: ServiceCategory;
-  estimatedDuration: EstimatedDuration;
+  description: string | undefined;
+  category: ServiceCategory | undefined;
+  estimatedDuration: EstimatedDuration | undefined;
   price: Money;
   isActive: boolean;
   createdAt: Date | null;
@@ -62,7 +62,7 @@ export class Service extends AggregateRoot<ServiceProps> {
     category?: ServiceCategory;
     estimatedDuration?: {
       minInMinutes: number;
-      maxInMinutes?: number;
+      maxInMinutes?: number | null | undefined;
     };
     price?: number;
   }) {
@@ -124,9 +124,13 @@ export class Service extends AggregateRoot<ServiceProps> {
   }
 
   changeEstimatedDuration(estimatedDuration: EstimatedDuration) {
-    if (this.estimatedDuration.equals(estimatedDuration)) return;
+    if (this.estimatedDuration?.equals(estimatedDuration)) return;
 
-    if (estimatedDuration.minInMinutes > this.estimatedDuration.maxInMinutes) {
+    if (
+      this.estimatedDuration &&
+      this.estimatedDuration.maxInMinutes &&
+      estimatedDuration.minInMinutes > this.estimatedDuration.maxInMinutes
+    ) {
       throw new InvalidEstimatedDurationTransitionError();
     }
 
@@ -153,12 +157,23 @@ export class Service extends AggregateRoot<ServiceProps> {
   }
 
   static create(
-    props: Optional<ServiceProps, "createdAt" | "updatedAt" | "isActive">,
+    props: Optional<
+      ServiceProps,
+      | "createdAt"
+      | "updatedAt"
+      | "isActive"
+      | "description"
+      | "category"
+      | "estimatedDuration"
+    >,
     id?: UniqueEntityId,
   ) {
     const service = new Service(
       {
         ...props,
+        description: props.description,
+        category: props.category,
+        estimatedDuration: props.estimatedDuration,
         isActive: props.isActive ?? true,
         createdAt: props.createdAt ?? new Date(),
         updatedAt: props.updatedAt ?? new Date(),

@@ -102,6 +102,7 @@ async function bootstrap(): Promise<void> {
     .addTag("auth", "Authentication and session management")
     .addTag("register", "Customer and establishment registration")
     .addTag("appointment", "Appointment management")
+    .addTag("service", "Service catalog management")
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory, {
@@ -223,9 +224,16 @@ async function bootstrap(): Promise<void> {
     },
   });
 
-  await app.listen(port, "0.0.0.0", () =>
-    console.log("Swagger: http://localhost:3000/api"),
-  );
+  await app.listen(port, "0.0.0.0");
+
+  if (envService.get("NODE_ENV") === "development") {
+    console.log(`
+    
+Swagger: http://localhost:3000/api
+    
+    
+    `);
+  }
 }
 
 void bootstrap();

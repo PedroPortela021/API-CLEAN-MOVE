@@ -10,8 +10,8 @@ export class AppointmentPresenter {
       service: {
         id: appointment.service.serviceId.toString(),
         name: appointment.service.serviceName,
-        category: appointment.service.category,
-        durationInMinutes: appointment.service.durationInMinutes,
+        category: appointment.service.category ?? null,
+        durationInMinutes: appointment.service.durationInMinutes ?? null,
         priceInCents: appointment.service.priceInCents,
       },
       slot: {
